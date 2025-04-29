@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Kamera Web HD dengan Fitur Lengkap</title>
+  <title>Kamera HD + Preview + Anti Pecah</title>
   <style>
     body {
       background: #121212;
@@ -11,13 +11,15 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 10px;
+      gap: 15px;
       padding: 20px;
     }
     video {
-      max-width: 90%;
+      width: 90%;
+      max-width: 600px;
       background: black;
       border-radius: 10px;
+      object-fit: contain;
       transform-origin: center;
       transition: transform 0.3s ease;
       will-change: transform;
@@ -45,7 +47,7 @@
   </style>
 </head>
 <body>
-  <h2>Kamera HD + Zoom Smooth + Flash + Stabil Ilusi</h2>
+  <h2>Kamera HD + Zoom + Flash + Preview</h2>
 
   <video id="preview" autoplay muted playsinline></video>
 
@@ -68,6 +70,9 @@
   <div id="status">Status: Siap</div>
   <a id="downloadLink" style="display:none;" download="rekaman.mp4">Download Rekaman</a>
 
+  <h3>Preview Hasil Rekaman:</h3>
+  <video id="recordedPreview" controls style="display:none;"></video>
+
   <script>
     let mediaRecorder;
     let recordedBlobs = [];
@@ -81,6 +86,7 @@
     const zoomControl = document.getElementById('zoomControl');
     const downloadLink = document.getElementById('downloadLink');
     const statusText = document.getElementById('status');
+    const recordedPreview = document.getElementById('recordedPreview');
 
     let currentZoom = 1;
     let targetZoom = 1;
@@ -137,11 +143,8 @@
           zoomControl.disabled = true;
         }
 
-        if (capabilities.torch !== undefined) {
-          document.getElementById('flashBtn').style.display = 'inline';
-        } else {
-          document.getElementById('flashBtn').style.display = 'none';
-        }
+        document.getElementById('flashBtn').style.display =
+          capabilities.torch !== undefined ? 'inline' : 'none';
 
         preview.style.transform = isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
       } catch (err) {
@@ -151,7 +154,8 @@
 
     document.getElementById('startBtn').onclick = () => {
       recordedBlobs = [];
-      mediaRecorder = new MediaRecorder(stream);
+      const options = { mimeType: 'video/webm;codecs=vp9' };
+      mediaRecorder = new MediaRecorder(stream, options);
       mediaRecorder.ondataavailable = e => {
         if (e.data.size > 0) recordedBlobs.push(e.data);
       };
@@ -160,6 +164,8 @@
         const url = URL.createObjectURL(blob);
         downloadLink.href = url;
         downloadLink.style.display = 'inline';
+        recordedPreview.src = url;
+        recordedPreview.style.display = 'block';
         statusText.textContent = 'Status: Rekaman selesai';
       };
       mediaRecorder.start();
