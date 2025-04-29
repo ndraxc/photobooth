@@ -3,813 +3,421 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Photo Booth Fun</title>
+    <title>Kamera Web dengan Zoom Smooth</title>
     <style>
-        :root {
-            --bg-color: #f0f2f5;
-            --text-color: #333;
-            --container-bg: white;
-            --primary-color: #3498db;
-            --primary-hover: #2980b9;
-            --success-color: #2ecc71;
-            --success-hover: #27ae60;
-            --danger-color: #e74c3c;
-            --danger-hover: #c0392b;
-            --secondary-color: #9b59b6;
-            --secondary-hover: #8e44ad;
-            --warning-color: #f39c12;
-            --warning-hover: #d35400;
-            --border-color: #ddd;
-            --shadow-color: rgba(0, 0, 0, 0.1);
-            --instructions-bg: #f8f9fa;
-        }
-
-        .dark-mode {
-            --bg-color: #1a1a1a;
-            --text-color: #f0f0f0;
-            --container-bg: #2d2d2d;
-            --border-color: #444;
-            --shadow-color: rgba(0, 0, 0, 0.3);
-            --instructions-bg: #333;
-        }
-
         body {
-            font-family: 'Arial', sans-serif;
-            background-color: var(--bg-color);
-            margin: 0;
-            padding: 20px;
-            color: var(--text-color);
-            transition: background-color 0.3s, color 0.3s;
-        }
-        
-        .container {
-            max-width: 1000px;
+            font-family: Arial, sans-serif;
+            max-width: 800px;
             margin: 0 auto;
-            background-color: var(--container-bg);
-            border-radius: 10px;
-            box-shadow: 0 0 20px var(--shadow-color);
             padding: 20px;
-            transition: background-color 0.3s;
+            background-color: #f5f5f5;
         }
         
-        h1, h2, h3 {
-            color: var(--text-color);
-        }
-        
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        
-        .theme-toggle {
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: var(--text-color);
-        }
-        
-        .camera-section {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-bottom: 30px;
-        }
-        
-        #cameraPreview {
-            width: 100%;
-            max-width: 640px;
-            height: 480px;
-            background-color: var(--border-color);
-            border-radius: 8px;
-            margin-bottom: 15px;
-            object-fit: cover;
-            transform: scaleX(1);
-            transition: transform 0.3s;
-        }
-        
-        .camera-controls {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-bottom: 20px;
-            justify-content: center;
-        }
-        
-        .camera-options {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        
-        select {
-            padding: 8px 12px;
-            border-radius: 5px;
-            border: 1px solid var(--border-color);
-            background-color: var(--container-bg);
-            color: var(--text-color);
-        }
-        
-        button {
-            padding: 10px 20px;
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.3s;
-        }
-        
-        button:hover {
-            background-color: var(--primary-hover);
-        }
-        
-        button:disabled {
-            background-color: #95a5a6;
-            cursor: not-allowed;
-        }
-        
-        #captureBtn {
-            background-color: var(--success-color);
-        }
-        
-        #captureBtn:hover {
-            background-color: var(--success-hover);
-        }
-        
-        #resetBtn {
-            background-color: var(--danger-color);
-        }
-        
-        #resetBtn:hover {
-            background-color: var(--danger-hover);
-        }
-        
-        .gallery {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-bottom: 20px;
-            justify-content: center;
-        }
-        
-        .thumbnail-container {
-            position: relative;
-        }
-        
-        .thumbnail {
-            width: 120px;
-            height: 90px;
-            object-fit: cover;
-            border-radius: 5px;
-            cursor: pointer;
-            border: 2px solid transparent;
-            transition: transform 0.3s, border-color 0.3s;
-        }
-        
-        .thumbnail:hover {
-            transform: scale(1.05);
-            border-color: var(--primary-color);
-        }
-        
-        .thumbnail.selected {
-            border-color: var(--success-color);
-        }
-        
-        .preview-btn {
-            position: absolute;
-            bottom: 5px;
-            right: 5px;
-            background-color: rgba(0, 0, 0, 0.7);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 25px;
-            height: 25px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            cursor: pointer;
-        }
-        
-        .collage-section {
-            margin-top: 30px;
+        h1 {
             text-align: center;
+            color: #333;
         }
         
-        #collageContainer {
-            display: flex;
-            justify-content: center;
-            margin: 20px 0;
-        }
-        
-        #collageResult {
-            max-width: 100%;
+        .camera-container {
+            position: relative;
+            width: 100%;
+            height: 0;
+            padding-bottom: 75%; /* 4:3 aspect ratio */
+            background-color: #000;
             border-radius: 8px;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
-        }
-        
-        .collage-layouts {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
+            overflow: hidden;
             margin-bottom: 20px;
-            flex-wrap: wrap;
         }
         
-        .layout-btn {
-            padding: 8px 15px;
-            background-color: var(--secondary-color);
-        }
-        
-        .layout-btn:hover {
-            background-color: var(--secondary-hover);
-        }
-        
-        .layout-btn.active {
-            background-color: var(--secondary-hover);
-            box-shadow: 0 0 0 2px var(--container-bg), 0 0 0 4px var(--secondary-hover);
-        }
-        
-        .download-btn {
-            background-color: var(--warning-color);
-        }
-        
-        .download-btn:hover {
-            background-color: var(--warning-hover);
-        }
-        
-        .instructions {
-            background-color: var(--instructions-bg);
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 30px;
-            border-left: 5px solid var(--primary-color);
-        }
-        
-        .instructions h3 {
-            margin-top: 0;
-        }
-        
-        .instructions ol {
-            padding-left: 20px;
-        }
-        
-        /* Modal styles */
-        .modal {
-            display: none;
-            position: fixed;
+        #video {
+            position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
-            z-index: 1000;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 50px;
+            background-color: #4285f4;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            background-color: #3367d6;
+            transform: scale(1.05);
+        }
+        
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        #captureBtn {
+            background-color: #34a853;
+        }
+        
+        #startRecordBtn {
+            background-color: #ea4335;
+        }
+        
+        #stopRecordBtn {
+            display: none;
+            background-color: #ea4335;
+        }
+        
+        .zoom-controls {
+            display: flex;
             justify-content: center;
             align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
         }
         
-        .modal-content {
-            max-width: 90%;
-            max-height: 90%;
+        .zoom-slider {
+            width: 60%;
+            -webkit-appearance: none;
+            height: 8px;
+            border-radius: 4px;
+            background: #ddd;
+            outline: none;
         }
         
-        .modal-content img {
-            max-width: 100%;
-            max-height: 80vh;
-            border-radius: 8px;
-        }
-        
-        .close-modal {
-            position: absolute;
-            top: 20px;
-            right: 30px;
-            color: white;
-            font-size: 30px;
+        .zoom-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #4285f4;
             cursor: pointer;
         }
         
-        @media (max-width: 768px) {
-            .camera-controls {
-                flex-direction: column;
-                align-items: center;
-            }
-            
-            #cameraPreview {
-                height: 300px;
-            }
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        .media-item {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .media-item img, .media-item video {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        
+        .media-item .download-btn {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            background-color: rgba(0,0,0,0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #f1f1f1;
+            border: none;
+            outline: none;
+        }
+        
+        .tab.active {
+            background-color: #4285f4;
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>Photo Booth Fun</h1>
-            <button class="theme-toggle" id="themeToggle">🌓</button>
-        </div>
-        
-        <div class="camera-section">
-            <video id="cameraPreview" autoplay playsinline></video>
-            
-            <div class="camera-options">
-                <select id="cameraSelect">
-                    <option value="">Select Camera</option>
-                </select>
-                
-                <select id="cameraMode">
-                    <option value="user">Front Camera</option>
-                    <option value="environment">Rear Camera</option>
-                    <option value="ultra-wide">Ultra Wide (if available)</option>
-                </select>
-                
-                <button id="invertBtn">Invert Camera</button>
-            </div>
-            
-            <div class="camera-controls">
-                <button id="startCameraBtn">Start Camera</button>
-                <button id="captureBtn" disabled>Take Photo</button>
-                <button id="resetBtn" disabled>Reset Photos</button>
-            </div>
-        </div>
-        
-        <div class="gallery" id="photoGallery">
-            <!-- Thumbnails will appear here -->
-        </div>
-        
-        <div class="collage-section">
-            <h2>Create Collage</h2>
-            <p>Select 2-4 photos from above to create a collage</p>
-            
-            <div class="collage-layouts">
-                <button class="layout-btn" data-layout="2-vertical">2 Vertical</button>
-                <button class="layout-btn" data-layout="2-horizontal">2 Horizontal</button>
-                <button class="layout-btn" data-layout="3-top">3 Top</button>
-                <button class="layout-btn" data-layout="4-grid">4 Grid</button>
-            </div>
-            
-            <div id="collageContainer">
-                <canvas id="collageResult" width="800" height="600"></canvas>
-            </div>
-            
-            <button id="downloadBtn" class="download-btn" disabled>Download Collage</button>
-        </div>
-        
-        <div class="instructions">
-            <h3>How to use:</h3>
-            <ol>
-                <li>Click "Start Camera" to enable your camera</li>
-                <li>Select camera and mode (front/back/ultra-wide)</li>
-                <li>Use "Invert Camera" to flip the image if needed</li>
-                <li>Click "Take Photo" to capture images</li>
-                <li>Click the eye icon to preview any photo</li>
-                <li>Select 2-4 photos from the gallery</li>
-                <li>Choose a collage layout</li>
-                <li>Download your collage!</li>
-            </ol>
-        </div>
+    <h1>Kamera Web dengan Zoom Smooth</h1>
+    
+    <div class="camera-container">
+        <video id="video" autoplay playsinline></video>
     </div>
-
-    <!-- Photo Preview Modal -->
-    <div class="modal" id="photoModal">
-        <span class="close-modal">&times;</span>
-        <div class="modal-content">
-            <img id="modalImage" src="" alt="Preview">
-        </div>
+    
+    <div class="zoom-controls">
+        <span>1x</span>
+        <input type="range" id="zoomSlider" class="zoom-slider" min="1" max="5" step="0.1" value="1">
+        <span>5x</span>
     </div>
-
+    
+    <div class="controls">
+        <button id="captureBtn">Ambil Foto</button>
+        <button id="startRecordBtn">Mulai Rekam</button>
+        <button id="stopRecordBtn" disabled>Stop Rekam</button>
+    </div>
+    
+    <div class="tabs">
+        <button class="tab active" onclick="openTab(event, 'photos')">Foto</button>
+        <button class="tab" onclick="openTab(event, 'videos')">Video</button>
+    </div>
+    
+    <div id="photos" class="tab-content active">
+        <h2>Foto yang Diambil</h2>
+        <div id="photoGallery" class="gallery"></div>
+    </div>
+    
+    <div id="videos" class="tab-content">
+        <h2>Video yang Direkam</h2>
+        <div id="videoGallery" class="gallery"></div>
+    </div>
+    
     <script>
-        // DOM Elements
-        const startCameraBtn = document.getElementById('startCameraBtn');
+        // Elemen DOM
+        const video = document.getElementById('video');
+        const zoomSlider = document.getElementById('zoomSlider');
         const captureBtn = document.getElementById('captureBtn');
-        const resetBtn = document.getElementById('resetBtn');
-        const cameraPreview = document.getElementById('cameraPreview');
+        const startRecordBtn = document.getElementById('startRecordBtn');
+        const stopRecordBtn = document.getElementById('stopRecordBtn');
         const photoGallery = document.getElementById('photoGallery');
-        const layoutBtns = document.querySelectorAll('.layout-btn');
-        const collageCanvas = document.getElementById('collageResult');
-        const downloadBtn = document.getElementById('downloadBtn');
-        const cameraSelect = document.getElementById('cameraSelect');
-        const cameraMode = document.getElementById('cameraMode');
-        const invertBtn = document.getElementById('invertBtn');
-        const themeToggle = document.getElementById('themeToggle');
-        const photoModal = document.getElementById('photoModal');
-        const modalImage = document.getElementById('modalImage');
-        const closeModal = document.querySelector('.close-modal');
+        const videoGallery = document.getElementById('videoGallery');
         
-        // Variables
-        let stream = null;
-        let photos = [];
-        let selectedPhotos = [];
-        let currentLayout = '2-vertical';
-        let isInverted = false;
-        let availableCameras = [];
-        let isDarkMode = false;
+        // Variabel untuk rekaman video
+        let mediaRecorder;
+        let recordedChunks = [];
+        let isRecording = false;
+        let currentZoom = 1;
+        let stream;
         
-        // Event Listeners
-        startCameraBtn.addEventListener('click', startCamera);
-        captureBtn.addEventListener('click', capturePhoto);
-        resetBtn.addEventListener('click', resetPhotos);
-        downloadBtn.addEventListener('click', downloadCollage);
-        invertBtn.addEventListener('click', toggleInvert);
-        cameraSelect.addEventListener('change', switchCamera);
-        cameraMode.addEventListener('change', startCamera);
-        themeToggle.addEventListener('click', toggleTheme);
-        closeModal.addEventListener('click', () => photoModal.style.display = 'none');
-        photoModal.addEventListener('click', (e) => {
-            if (e.target === photoModal) {
-                photoModal.style.display = 'none';
-            }
-        });
-        
-        layoutBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                layoutBtns.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                currentLayout = btn.dataset.layout;
-                if (selectedPhotos.length > 1) {
-                    createCollage();
-                }
-            });
-        });
-        
-        // Functions
-        async function startCamera() {
+        // Inisialisasi kamera
+        async function initCamera() {
             try {
-                // Stop any existing stream
-                if (stream) {
-                    stream.getTracks().forEach(track => track.stop());
-                }
-                
-                const constraints = {
+                stream = await navigator.mediaDevices.getUserMedia({
                     video: {
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 },
-                        facingMode: cameraMode.value === 'ultra-wide' ? 'environment' : cameraMode.value
+                        facingMode: 'environment',
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
                     },
-                    audio: false
-                };
+                    audio: true
+                });
                 
-                // If a specific camera is selected, use its deviceId
-                if (cameraSelect.value) {
-                    constraints.video.deviceId = { exact: cameraSelect.value };
-                    delete constraints.video.facingMode;
-                }
+                video.srcObject = stream;
                 
-                stream = await navigator.mediaDevices.getUserMedia(constraints);
-                
-                cameraPreview.srcObject = stream;
-                startCameraBtn.disabled = true;
+                // Aktifkan tombol setelah kamera siap
                 captureBtn.disabled = false;
-                resetBtn.disabled = false;
+                startRecordBtn.disabled = false;
                 
-                // Update camera list if not already done
-                if (availableCameras.length === 0) {
-                    await getCameras();
-                }
+                // Setup pinch zoom untuk perangkat touch
+                setupPinchZoom();
                 
-                // Apply current invert state
-                cameraPreview.style.transform = isInverted ? 'scaleX(-1)' : 'scaleX(1)';
             } catch (err) {
                 console.error("Error accessing camera:", err);
-                alert("Could not access the camera. Please make sure you've granted camera permissions.");
+                alert("Tidak dapat mengakses kamera. Pastikan Anda memberikan izin.");
             }
         }
         
-        async function getCameras() {
-            try {
-                const devices = await navigator.mediaDevices.enumerateDevices();
-                const videoDevices = devices.filter(device => device.kind === 'videoinput');
-                
-                availableCameras = videoDevices;
-                cameraSelect.innerHTML = '<option value="">Select Camera</option>';
-                
-                videoDevices.forEach(device => {
-                    const option = document.createElement('option');
-                    option.value = device.deviceId;
-                    option.text = device.label || `Camera ${cameraSelect.length}`;
-                    cameraSelect.appendChild(option);
-                });
-            } catch (err) {
-                console.error("Error enumerating cameras:", err);
-            }
-        }
-        
-        function switchCamera() {
-            if (cameraSelect.value) {
-                startCamera();
-            }
-        }
-        
-        function toggleInvert() {
-            isInverted = !isInverted;
-            cameraPreview.style.transform = isInverted ? 'scaleX(-1)' : 'scaleX(1)';
-            invertBtn.textContent = isInverted ? 'Revert Camera' : 'Invert Camera';
-        }
-        
-        function toggleTheme() {
-            isDarkMode = !isDarkMode;
-            document.body.classList.toggle('dark-mode', isDarkMode);
-            themeToggle.textContent = isDarkMode ? '🌞' : '🌓';
+        // Setup pinch zoom untuk perangkat touch
+        function setupPinchZoom() {
+            let initialDistance = null;
             
-            // Save preference to localStorage
-            localStorage.setItem('darkMode', isDarkMode);
+            video.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 2) {
+                    initialDistance = Math.hypot(
+                        e.touches[0].clientX - e.touches[1].clientX,
+                        e.touches[0].clientY - e.touches[1].clientY
+                    );
+                }
+            });
+            
+            video.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 2 && initialDistance !== null) {
+                    const currentDistance = Math.hypot(
+                        e.touches[0].clientX - e.touches[1].clientX,
+                        e.touches[0].clientY - e.touches[1].clientY
+                    );
+                    
+                    const scale = currentDistance / initialDistance;
+                    const newZoom = Math.min(Math.max(currentZoom * scale, 1), 5);
+                    
+                    if (newZoom !== currentZoom) {
+                        currentZoom = newZoom;
+                        zoomSlider.value = currentZoom;
+                        applyZoom();
+                    }
+                }
+            });
+            
+            video.addEventListener('touchend', () => {
+                initialDistance = null;
+            });
         }
         
-        function capturePhoto() {
-            if (!stream) return;
-            
-            // Create a canvas to capture the current frame
+        // Terapkan zoom ke video
+        function applyZoom() {
+            video.style.transform = `scale(${currentZoom})`;
+        }
+        
+        // Tangkap gambar
+        captureBtn.addEventListener('click', () => {
             const canvas = document.createElement('canvas');
-            canvas.width = cameraPreview.videoWidth;
-            canvas.height = cameraPreview.videoHeight;
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
             const ctx = canvas.getContext('2d');
             
-            // Apply inversion if needed
-            if (isInverted) {
-                ctx.translate(canvas.width, 0);
-                ctx.scale(-1, 1);
-            }
+            // Hitung area yang akan diambil berdasarkan zoom
+            const scaledWidth = video.videoWidth / currentZoom;
+            const scaledHeight = video.videoHeight / currentZoom;
+            const offsetX = (video.videoWidth - scaledWidth) / 2;
+            const offsetY = (video.videoHeight - scaledHeight) / 2;
             
-            // Draw the current video frame to the canvas
-            ctx.drawImage(cameraPreview, 0, 0, canvas.width, canvas.height);
+            ctx.drawImage(
+                video,
+                offsetX, offsetY, scaledWidth, scaledHeight,
+                0, 0, canvas.width, canvas.height
+            );
             
-            // Add the photo to our array
-            const photoUrl = canvas.toDataURL('image/jpeg');
-            photos.push(photoUrl);
-            
-            // Update the gallery
-            updateGallery();
-            
-            // Flash effect
-            cameraPreview.style.transition = 'none';
-            cameraPreview.style.filter = 'brightness(2)';
-            setTimeout(() => {
-                cameraPreview.style.transition = 'filter 0.5s';
-                cameraPreview.style.filter = 'brightness(1)';
-            }, 100);
-        }
+            // Tambahkan ke galeri
+            addToGallery(canvas.toDataURL('image/jpeg'), 'photo');
+        });
         
-        function updateGallery() {
-            photoGallery.innerHTML = '';
+        // Mulai rekam video
+        startRecordBtn.addEventListener('click', () => {
+            recordedChunks = [];
             
-            photos.forEach((photo, index) => {
-                const container = document.createElement('div');
-                container.className = 'thumbnail-container';
+            try {
+                mediaRecorder = new MediaRecorder(stream, {
+                    mimeType: 'video/webm;codecs=vp9',
+                    bitsPerSecond: 2500000 // 2.5 Mbps
+                });
                 
+                mediaRecorder.ondataavailable = (e) => {
+                    if (e.data.size > 0) {
+                        recordedChunks.push(e.data);
+                    }
+                };
+                
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                    const videoUrl = URL.createObjectURL(blob);
+                    addToGallery(videoUrl, 'video');
+                };
+                
+                mediaRecorder.start(100); // Kumpulkan data setiap 100ms
+                isRecording = true;
+                startRecordBtn.style.display = 'none';
+                stopRecordBtn.style.display = 'inline-block';
+                captureBtn.disabled = true;
+                
+            } catch (err) {
+                console.error("Error starting recording:", err);
+                alert("Gagal memulai rekaman. Coba browser yang berbeda.");
+            }
+        });
+        
+        // Stop rekam video
+        stopRecordBtn.addEventListener('click', () => {
+            if (isRecording && mediaRecorder) {
+                mediaRecorder.stop();
+                isRecording = false;
+                startRecordBtn.style.display = 'inline-block';
+                stopRecordBtn.style.display = 'none';
+                captureBtn.disabled = false;
+            }
+        });
+        
+        // Kontrol zoom dengan slider
+        zoomSlider.addEventListener('input', () => {
+            currentZoom = parseFloat(zoomSlider.value);
+            applyZoom();
+        });
+        
+        // Tambahkan media ke galeri
+        function addToGallery(url, type) {
+            const gallery = type === 'photo' ? photoGallery : videoGallery;
+            const mediaItem = document.createElement('div');
+            mediaItem.className = 'media-item';
+            
+            if (type === 'photo') {
                 const img = document.createElement('img');
-                img.src = photo;
-                img.className = 'thumbnail';
-                img.alt = `Photo ${index + 1}`;
-                
-                if (selectedPhotos.includes(index)) {
-                    img.classList.add('selected');
-                }
-                
-                img.addEventListener('click', () => {
-                    togglePhotoSelection(index);
-                });
-                
-                // Add preview button
-                const previewBtn = document.createElement('button');
-                previewBtn.className = 'preview-btn';
-                previewBtn.innerHTML = '👁️';
-                previewBtn.title = 'Preview photo';
-                previewBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    showPhotoPreview(photo);
-                });
-                
-                container.appendChild(img);
-                container.appendChild(previewBtn);
-                photoGallery.appendChild(container);
-            });
-        }
-        
-        function showPhotoPreview(photoUrl) {
-            modalImage.src = photoUrl;
-            photoModal.style.display = 'flex';
-        }
-        
-        function togglePhotoSelection(index) {
-            const photoIndex = selectedPhotos.indexOf(index);
-            
-            if (photoIndex === -1) {
-                // Add to selection if we have less than 4 or it's already selected
-                if (selectedPhotos.length < 4) {
-                    selectedPhotos.push(index);
-                }
+                img.src = url;
+                mediaItem.appendChild(img);
             } else {
-                // Remove from selection
-                selectedPhotos.splice(photoIndex, 1);
+                const vid = document.createElement('video');
+                vid.src = url;
+                vid.controls = true;
+                mediaItem.appendChild(vid);
             }
             
-            updateGallery();
+            const downloadBtn = document.createElement('button');
+            downloadBtn.className = 'download-btn';
+            downloadBtn.innerHTML = '↓';
+            downloadBtn.title = 'Unduh';
+            downloadBtn.addEventListener('click', () => downloadMedia(url, type));
+            mediaItem.appendChild(downloadBtn);
             
-            if (selectedPhotos.length >= 2) {
-                createCollage();
-                downloadBtn.disabled = false;
-            } else {
-                downloadBtn.disabled = true;
-                collageCanvas.getContext('2d').clearRect(0, 0, collageCanvas.width, collageCanvas.height);
-            }
+            gallery.insertBefore(mediaItem, gallery.firstChild);
         }
         
-        function createCollage() {
-            if (selectedPhotos.length < 2) return;
-            
-            const ctx = collageCanvas.getContext('2d');
-            ctx.clearRect(0, 0, collageCanvas.width, collageCanvas.height);
-            
-            // Set a background based on theme
-            ctx.fillStyle = isDarkMode ? '#2d2d2d' : 'white';
-            ctx.fillRect(0, 0, collageCanvas.width, collageCanvas.height);
-            
-            const imagesToLoad = selectedPhotos.map(index => {
-                return new Promise((resolve) => {
-                    const img = new Image();
-                    img.onload = () => resolve(img);
-                    img.src = photos[index];
-                });
-            });
-            
-            Promise.all(imagesToLoad).then(loadedImages => {
-                switch(currentLayout) {
-                    case '2-vertical':
-                        createVerticalCollage(ctx, loadedImages);
-                        break;
-                    case '2-horizontal':
-                        createHorizontalCollage(ctx, loadedImages);
-                        break;
-                    case '3-top':
-                        createThreeTopCollage(ctx, loadedImages);
-                        break;
-                    case '4-grid':
-                        createGridCollage(ctx, loadedImages);
-                        break;
-                    default:
-                        createVerticalCollage(ctx, loadedImages);
-                }
-            });
+        // Unduh media
+        function downloadMedia(url, type) {
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${type}_${new Date().toISOString().replace(/[:.]/g, '-')}.${type === 'photo' ? 'jpg' : 'mp4'}`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
         }
         
-        function createVerticalCollage(ctx, images) {
-            const padding = 20;
-            const availableHeight = collageCanvas.height - (padding * 2);
-            const sectionHeight = availableHeight / Math.min(2, images.length);
-            const width = collageCanvas.width - (padding * 2);
-            
-            images.slice(0, 2).forEach((img, i) => {
-                const y = padding + (sectionHeight * i);
-                const aspectRatio = img.width / img.height;
-                const imgHeight = sectionHeight;
-                const imgWidth = imgHeight * aspectRatio;
-                
-                // Center the image
-                const x = padding + (width - imgWidth) / 2;
-                
-                ctx.drawImage(img, x, y, imgWidth, imgHeight);
-            });
-        }
-        
-        function createHorizontalCollage(ctx, images) {
-            const padding = 20;
-            const availableWidth = collageCanvas.width - (padding * 2);
-            const sectionWidth = availableWidth / Math.min(2, images.length);
-            const height = collageCanvas.height - (padding * 2);
-            
-            images.slice(0, 2).forEach((img, i) => {
-                const x = padding + (sectionWidth * i);
-                const aspectRatio = img.width / img.height;
-                const imgWidth = sectionWidth;
-                const imgHeight = imgWidth / aspectRatio;
-                
-                // Center the image vertically
-                const y = padding + (height - imgHeight) / 2;
-                
-                ctx.drawImage(img, x, y, imgWidth, imgHeight);
-            });
-        }
-        
-        function createThreeTopCollage(ctx, images) {
-            const padding = 20;
-            const topHeight = (collageCanvas.height - (padding * 2)) * 0.6;
-            const bottomHeight = (collageCanvas.height - (padding * 2)) * 0.4;
-            const topWidth = collageCanvas.width - (padding * 2);
-            const bottomSectionWidth = (collageCanvas.width - (padding * 3)) / 2;
-            
-            // Top image
-            if (images[0]) {
-                const topImg = images[0];
-                const aspectRatio = topImg.width / topImg.height;
-                const imgWidth = topWidth;
-                const imgHeight = imgWidth / aspectRatio;
-                
-                // If image is taller than our section, adjust
-                const finalHeight = Math.min(imgHeight, topHeight);
-                const finalWidth = finalHeight * aspectRatio;
-                
-                const x = padding + (topWidth - finalWidth) / 2;
-                const y = padding;
-                
-                ctx.drawImage(topImg, x, y, finalWidth, finalHeight);
+        // Fungsi untuk tab
+        function openTab(evt, tabName) {
+            const tabContents = document.getElementsByClassName('tab-content');
+            for (let i = 0; i < tabContents.length; i++) {
+                tabContents[i].classList.remove('active');
             }
             
-            // Bottom images
-            images.slice(1, 3).forEach((img, i) => {
-                if (!img) return;
-                
-                const x = padding + (i * (bottomSectionWidth + padding));
-                const y = padding + topHeight;
-                const aspectRatio = img.width / img.height;
-                const imgWidth = bottomSectionWidth;
-                const imgHeight = imgWidth / aspectRatio;
-                
-                // If image is taller than our section, adjust
-                const finalHeight = Math.min(imgHeight, bottomHeight);
-                const finalWidth = finalHeight * aspectRatio;
-                
-                const centeredX = x + (bottomSectionWidth - finalWidth) / 2;
-                const centeredY = y + (bottomHeight - finalHeight) / 2;
-                
-                ctx.drawImage(img, centeredX, centeredY, finalWidth, finalHeight);
-            });
-        }
-        
-        function createGridCollage(ctx, images) {
-            const padding = 20;
-            const availableWidth = collageCanvas.width - (padding * 3); // 3 gaps (between 4 images)
-            const availableHeight = collageCanvas.height - (padding * 3);
-            const sectionWidth = availableWidth / 2;
-            const sectionHeight = availableHeight / 2;
-            
-            images.slice(0, 4).forEach((img, i) => {
-                const row = Math.floor(i / 2);
-                const col = i % 2;
-                
-                const x = padding + (col * (sectionWidth + padding));
-                const y = padding + (row * (sectionHeight + padding));
-                
-                const aspectRatio = img.width / img.height;
-                let imgWidth, imgHeight;
-                
-                // Fit image to section while maintaining aspect ratio
-                if (aspectRatio > 1) {
-                    // Landscape
-                    imgWidth = sectionWidth;
-                    imgHeight = imgWidth / aspectRatio;
-                } else {
-                    // Portrait or square
-                    imgHeight = sectionHeight;
-                    imgWidth = imgHeight * aspectRatio;
-                }
-                
-                // Center the image in its section
-                const centeredX = x + (sectionWidth - imgWidth) / 2;
-                const centeredY = y + (sectionHeight - imgHeight) / 2;
-                
-                ctx.drawImage(img, centeredX, centeredY, imgWidth, imgHeight);
-            });
-        }
-        
-        function resetPhotos() {
-            photos = [];
-            selectedPhotos = [];
-            updateGallery();
-            collageCanvas.getContext('2d').clearRect(0, 0, collageCanvas.width, collageCanvas.height);
-            downloadBtn.disabled = true;
-        }
-        
-        function downloadCollage() {
-            if (selectedPhotos.length < 2) return;
-            
-            const link = document.createElement('a');
-            link.download = 'photo-booth-collage.png';
-            link.href = collageCanvas.toDataURL('image/png');
-            link.click();
-        }
-        
-        // Initialize
-        function init() {
-            layoutBtns[0].classList.add('active');
-            
-            // Check for saved theme preference
-            const savedDarkMode = localStorage.getItem('darkMode') === 'true';
-            if (savedDarkMode) {
-                isDarkMode = true;
-                document.body.classList.add('dark-mode');
-                themeToggle.textContent = '🌞';
+            const tabs = document.getElementsByClassName('tab');
+            for (let i = 0; i < tabs.length; i++) {
+                tabs[i].classList.remove('active');
             }
             
-            // Get available cameras
-            getCameras();
+            document.getElementById(tabName).classList.add('active');
+            evt.currentTarget.classList.add('active');
         }
         
-        init();
+        // Mulai aplikasi
+        window.addEventListener('DOMContentLoaded', initCamera);
     </script>
 </body>
 </html>
