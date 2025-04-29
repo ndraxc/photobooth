@@ -1,32 +1,28 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Kamera Ultra Smooth Zoom dengan Stabilisasi</title>
+  <title>Kamera HD + Stabilizer + Zoom + Flash</title>
   <style>
     body {
-      background-color: #121212;
+      background: #121212;
       color: #ffffff;
-      font-family: 'Segoe UI', sans-serif;
+      font-family: sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 10px;
       padding: 20px;
     }
-
     video {
-      max-width: 100%;
+      max-width: 90%;
+      background: black;
       border-radius: 10px;
-      background-color: #000;
       transform-origin: center;
       transition: transform 0.3s ease;
     }
-
     input[type="range"] {
       width: 300px;
     }
-
     button {
       padding: 10px 15px;
       margin: 5px;
@@ -35,82 +31,31 @@
       color: white;
       border-radius: 5px;
       cursor: pointer;
-      transition: background-color 0.2s ease;
     }
-
     button:hover {
       background-color: #333;
     }
-
-    button:disabled {
-      background-color: #0a0a0a;
-      color: #555;
-      cursor: not-allowed;
-    }
-
     a {
-      margin-top: 10px;
       color: #4caf50;
-      font-weight: bold;
-    }
-
-    .progress-container {
-      width: 300px;
-      height: 20px;
-      background-color: #1f1f1f;
-      border-radius: 10px;
-      margin: 10px 0;
-      display: none;
-    }
-
-    .progress-bar {
-      height: 100%;
-      background-color: #4caf50;
-      border-radius: 10px;
-      width: 0%;
-      transition: width 0.3s ease;
-    }
-
-    .status {
-      margin: 10px 0;
       font-weight: bold;
     }
   </style>
 </head>
 <body>
-  <h2>Kamera HD + Ultra Smooth Zoom + Stabilisasi</h2>
-  <video id="preview" autoplay muted playsinline></video>
+  <h2>Kamera HD + Zoom Smooth + Flash + Stabilizer</h2><video id="preview" autoplay muted playsinline></video> <video id="recordedVideo" controls style="display:none;"></video>
 
   <div>
     <label>Zoom:</label>
     <input type="range" id="zoomControl" min="1" max="3" step="0.01" value="1">
-  </div>
-
-  <div>
+  </div>  <div>
     <button id="flipCamBtn">Ganti Kamera</button>
     <button id="mirrorBtn">Flip Horizontal</button>
     <button id="flashBtn">Toggle Flash</button>
-  </div>
-
-  <div>
+  </div>  <div>
     <button id="startBtn">Mulai Rekam</button>
     <button id="stopBtn" disabled>Stop</button>
-    <button id="stabilizeBtn" disabled>Stabilkan Video</button>
-  </div>
-
-  <div class="progress-container" id="progressContainer">
-    <div class="progress-bar" id="progressBar"></div>
-  </div>
-  <div class="status" id="statusText"></div>
-
-  <a id="downloadLink" style="display:none;" download="rekaman_hd.webm">Download Rekaman</a>
-  <a id="downloadStabilizedLink" style="display:none;" download="rekaman_stabil.webm">Download Stabilized</a>
-  <video id="recordedVideo" controls style="display:none;"></video>
-  <video id="stabilizedVideo" controls style="display:none;"></video>
-
-  <!-- Load ffmpeg.wasm -->
-  <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
-  <script>
+  </div>  <div id="status">Status: Siap</div>
+  <a id="downloadLink" style="display:none;" download="rekaman_stabil.mp4">Download Rekaman Stabil</a>  <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>  <script>
     let mediaRecorder;
     let recordedBlobs = [];
     let videoTrack;
@@ -118,31 +63,12 @@
     let usingFrontCamera = true;
     let isMirrored = false;
     let isTorchOn = false;
-    let recordedVideoBlob = null;
-    let stabilizedVideoBlob = null;
 
     const preview = document.getElementById('preview');
     const recordedVideo = document.getElementById('recordedVideo');
-    const stabilizedVideo = document.getElementById('stabilizedVideo');
     const zoomControl = document.getElementById('zoomControl');
     const downloadLink = document.getElementById('downloadLink');
-    const downloadStabilizedLink = document.getElementById('downloadStabilizedLink');
-    const flashBtn = document.getElementById('flashBtn');
-    const progressContainer = document.getElementById('progressContainer');
-    const progressBar = document.getElementById('progressBar');
-    const statusText = document.getElementById('statusText');
-    const stabilizeBtn = document.getElementById('stabilizeBtn');
-
-    // Initialize ffmpeg
-    const { createFFmpeg, fetchFile } = FFmpeg;
-    const ffmpeg = createFFmpeg({ 
-      log: true,
-      progress: ({ ratio }) => {
-        const percent = Math.round(ratio * 100);
-        progressBar.style.width = `${percent}%`;
-        statusText.textContent = `Memproses: ${percent}%`;
-      }
-    });
+    const statusText = document.getElementById('status');
 
     let currentZoom = 1;
     let targetZoom = 1;
@@ -157,9 +83,8 @@
       if (diff < 0.001) {
         currentZoom = targetZoom;
       } else {
-        currentZoom = lerp(currentZoom, targetZoom, 0.05); // Lebih halus
+        currentZoom = lerp(currentZoom, targetZoom, 0.05);
       }
-
       videoTrack.applyConstraints({ advanced: [{ zoom: currentZoom }] }).catch(() => {});
       requestAnimationFrame(animateZoom);
     }
@@ -168,26 +93,23 @@
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
       }
-
       const constraints = {
         audio: true,
         video: {
           facingMode: usingFrontCamera ? 'user' : 'environment',
           width: { ideal: 1920 },
           height: { ideal: 1080 },
+          frameRate: { ideal: 30, max: 60 },
           zoom: true,
           torch: true
         }
       };
-
       try {
         stream = await navigator.mediaDevices.getUserMedia(constraints);
         preview.srcObject = stream;
-
         videoTrack = stream.getVideoTracks()[0];
         const capabilities = videoTrack.getCapabilities();
 
-        // Setup Zoom
         if (capabilities.zoom) {
           zoomControl.min = capabilities.zoom.min;
           zoomControl.max = capabilities.zoom.max;
@@ -195,59 +117,44 @@
           currentZoom = targetZoom = videoTrack.getSettings().zoom || 1;
           zoomControl.value = currentZoom;
           zoomControl.disabled = false;
-
           zoomControl.oninput = () => {
             targetZoom = parseFloat(zoomControl.value);
           };
-
-          animateZoom(); // Start zoom animation
+          animateZoom();
         } else {
           zoomControl.disabled = true;
         }
 
-        // Setup Flash
         if (capabilities.torch !== undefined) {
-          flashBtn.style.display = 'inline';
+          document.getElementById('flashBtn').style.display = 'inline';
         } else {
-          flashBtn.style.display = 'none';
+          document.getElementById('flashBtn').style.display = 'none';
         }
-
-        // Setup Recorder
-        mediaRecorder = new MediaRecorder(stream);
-        mediaRecorder.ondataavailable = (e) => {
-          if (e.data.size > 0) recordedBlobs.push(e.data);
-        };
-
-        mediaRecorder.onstop = () => {
-          recordedVideoBlob = new Blob(recordedBlobs, { type: 'video/webm' });
-          const url = URL.createObjectURL(recordedVideoBlob);
-          recordedVideo.src = url;
-          recordedVideo.style.display = 'block';
-          downloadLink.href = url;
-          downloadLink.style.display = 'inline';
-          stabilizeBtn.disabled = false;
-        };
 
         preview.style.transform = isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
       } catch (err) {
         alert('Gagal mengakses kamera: ' + err.message);
-        console.error(err);
       }
     }
 
     document.getElementById('startBtn').onclick = () => {
       recordedBlobs = [];
+      mediaRecorder = new MediaRecorder(stream);
+      mediaRecorder.ondataavailable = e => {
+        if (e.data.size > 0) recordedBlobs.push(e.data);
+      };
+      mediaRecorder.onstop = processVideo;
       mediaRecorder.start();
+      statusText.textContent = 'Status: Merekam...';
       document.getElementById('startBtn').disabled = true;
       document.getElementById('stopBtn').disabled = false;
-      statusText.textContent = "Sedang merekam...";
     };
 
     document.getElementById('stopBtn').onclick = () => {
       mediaRecorder.stop();
       document.getElementById('startBtn').disabled = false;
       document.getElementById('stopBtn').disabled = true;
-      statusText.textContent = "Rekaman selesai";
+      statusText.textContent = 'Status: Memproses video...';
     };
 
     document.getElementById('flipCamBtn').onclick = () => {
@@ -260,78 +167,46 @@
       preview.style.transform = isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
     };
 
-    flashBtn.onclick = () => {
+    document.getElementById('flashBtn').onclick = () => {
       if (!videoTrack) return;
       isTorchOn = !isTorchOn;
       videoTrack.applyConstraints({ advanced: [{ torch: isTorchOn }] }).catch(err => {
         alert('Flash tidak tersedia di perangkat ini.');
-        console.error(err);
       });
     };
 
-    stabilizeBtn.onclick = async () => {
-      if (!recordedVideoBlob) return;
-      
-      try {
-        stabilizeBtn.disabled = true;
-        progressContainer.style.display = 'block';
-        statusText.textContent = "Memulai stabilisasi...";
-        
-        // Load ffmpeg if not loaded
-        if (!ffmpeg.isLoaded()) {
-          statusText.textContent = "Memuat FFmpeg...";
-          await ffmpeg.load();
-        }
-        
-        // Write the file to FFmpeg's file system
-        statusText.textContent = "Mempersiapkan video...";
-        const inputName = 'input.webm';
-        const outputName = 'output_stabilized.webm';
-        ffmpeg.FS('writeFile', inputName, await fetchFile(recordedVideoBlob));
-        
-        // Run stabilization command
-        statusText.textContent = "Menstabilkan video... (Proses ini mungkin memakan waktu)";
-        
-        // Stabilization command using vidstab
-        await ffmpeg.run(
-          '-i', inputName,
-          '-vf', 'vidstabdetect=stepsize=4:shakiness=8:accuracy=9:result=transform_vectors.trf',
-          '-f', 'null', '-'
-        );
-        
-        await ffmpeg.run(
-          '-i', inputName,
-          '-vf', 'vidstabtransform=input=transform_vectors.trf:zoom=0:smoothing=10:interpol=bicubic',
-          '-c:v', 'libvpx-vp9',
-          '-crf', '30',
-          '-b:v', '0',
-          '-c:a', 'libopus',
-          outputName
-        );
-        
-        // Read the result
-        const data = ffmpeg.FS('readFile', outputName);
-        stabilizedVideoBlob = new Blob([data.buffer], { type: 'video/webm' });
-        const stabilizedUrl = URL.createObjectURL(stabilizedVideoBlob);
-        
-        // Display the stabilized video
-        stabilizedVideo.src = stabilizedUrl;
-        stabilizedVideo.style.display = 'block';
-        downloadStabilizedLink.href = stabilizedUrl;
-        downloadStabilizedLink.style.display = 'inline';
-        
-        statusText.textContent = "Stabilisasi selesai!";
-        progressContainer.style.display = 'none';
-        stabilizeBtn.disabled = false;
-      } catch (error) {
-        console.error('Error during stabilization:', error);
-        statusText.textContent = "Gagal menstabilkan video: " + error.message;
-        stabilizeBtn.disabled = false;
-        progressContainer.style.display = 'none';
-      }
-    };
+    async function processVideo() {
+      const blob = new Blob(recordedBlobs, { type: 'video/webm' });
+      const arrayBuffer = await blob.arrayBuffer();
+      const { createFFmpeg, fetchFile } = FFmpeg;
+      const ffmpeg = createFFmpeg({ log: true });
+
+      statusText.textContent = 'Status: Memuat FFmpeg...';
+      await ffmpeg.load();
+
+      ffmpeg.FS('writeFile', 'input.webm', new Uint8Array(arrayBuffer));
+      statusText.textContent = 'Status: Menstabilisasi video...';
+
+      await ffmpeg.run(
+        '-i', 'input.webm',
+        '-vf', 'vidstabdetect=shakiness=10:accuracy=15,vidstabtransform=smoothing=30:input="transforms.trf"',
+        '-c:v', 'libx264',
+        '-preset', 'fast',
+        '-c:a', 'copy',
+        'output.mp4'
+      );
+
+      const data = ffmpeg.FS('readFile', 'output.mp4');
+      const stabilizedBlob = new Blob([data.buffer], { type: 'video/mp4' });
+      const url = URL.createObjectURL(stabilizedBlob);
+
+      recordedVideo.src = url;
+      recordedVideo.style.display = 'block';
+      downloadLink.href = url;
+      downloadLink.style.display = 'inline';
+      statusText.textContent = 'Status: Selesai!';
+    }
 
     startCamera();
-  </script>
-</body>
+  </script></body>
 </html>
