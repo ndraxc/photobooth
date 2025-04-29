@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kamera Web dengan Zoom Smooth</title>
+    <title>Kamera Web dengan Fitur Lengkap</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -22,7 +22,7 @@
             position: relative;
             width: 100%;
             height: 0;
-            padding-bottom: 75%; /* 4:3 aspect ratio */
+            padding-bottom: 56.25%; /* 16:9 aspect ratio */
             background-color: #000;
             border-radius: 8px;
             overflow: hidden;
@@ -37,6 +37,7 @@
             height: 100%;
             object-fit: cover;
             transition: transform 0.3s ease;
+            transform-origin: center center;
         }
         
         .controls {
@@ -85,6 +86,10 @@
             background-color: #fbbc05;
         }
         
+        #flipCameraBtn {
+            background-color: #9c27b0;
+        }
+        
         .zoom-controls {
             display: flex;
             justify-content: center;
@@ -110,6 +115,22 @@
             border-radius: 50%;
             background: #4285f4;
             cursor: pointer;
+        }
+        
+        .zoom-buttons {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .zoom-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
         }
         
         .gallery {
@@ -240,21 +261,39 @@
             font-weight: bold;
             color: #555;
         }
+        
+        .fps-counter {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(0,0,0,0.5);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            z-index: 10;
+        }
     </style>
 </head>
 <body>
-    <h1>Kamera Web dengan Zoom Smooth</h1>
+    <h1>Kamera Web dengan Fitur Lengkap</h1>
     
     <div class="camera-info" id="cameraInfo">Kamera Belakang</div>
     
     <div class="camera-container">
+        <div class="fps-counter" id="fpsCounter">0 FPS</div>
         <video id="video" autoplay playsinline></video>
     </div>
     
     <div class="zoom-controls">
-        <span>1x</span>
-        <input type="range" id="zoomSlider" class="zoom-slider" min="1" max="5" step="0.1" value="1">
-        <span>5x</span>
+        <div class="zoom-buttons">
+            <button class="zoom-btn" id="zoomOutBtn">-</button>
+        </div>
+        <input type="range" id="zoomSlider" class="zoom-slider" min="1" max="10" step="0.1" value="1">
+        <div class="zoom-buttons">
+            <button class="zoom-btn" id="zoomInBtn">+</button>
+            <button class="zoom-btn" id="zoomResetBtn">1x</button>
+        </div>
     </div>
     
     <div class="controls">
@@ -262,6 +301,7 @@
         <button id="startRecordBtn">Mulai Rekam</button>
         <button id="stopRecordBtn" disabled>Stop Rekam</button>
         <button id="switchCameraBtn">Ganti Kamera</button>
+        <button id="flipCameraBtn">Flip Kamera</button>
     </div>
     
     <div class="tabs">
@@ -291,16 +331,21 @@
         // Elemen DOM
         const video = document.getElementById('video');
         const zoomSlider = document.getElementById('zoomSlider');
+        const zoomInBtn = document.getElementById('zoomInBtn');
+        const zoomOutBtn = document.getElementById('zoomOutBtn');
+        const zoomResetBtn = document.getElementById('zoomResetBtn');
         const captureBtn = document.getElementById('captureBtn');
         const startRecordBtn = document.getElementById('startRecordBtn');
         const stopRecordBtn = document.getElementById('stopRecordBtn');
         const switchCameraBtn = document.getElementById('switchCameraBtn');
+        const flipCameraBtn = document.getElementById('flipCameraBtn');
         const photoGallery = document.getElementById('photoGallery');
         const videoGallery = document.getElementById('videoGallery');
         const cameraInfo = document.getElementById('cameraInfo');
         const previewContainer = document.getElementById('previewContainer');
         const videoPreview = document.getElementById('videoPreview');
         const imagePreview = document.getElementById('imagePreview');
+        const fpsCounter = document.getElementById('fpsCounter');
         
         // Variabel untuk rekaman video
         let mediaRecorder;
@@ -311,9 +356,34 @@
         let currentFacingMode = 'environment';
         let savedPhotos = [];
         let savedVideos = [];
+        let flipHorizontal = false;
+        let fps = 0;
+        let lastFrameTime = 0;
+        let frameCount = 0;
+        let frameTime = 0;
+        let devices = [];
+        let currentDeviceId = '';
+        
+        // FPS counter
+        function updateFPS() {
+            const now = performance.now();
+            if (lastFrameTime) {
+                frameTime += now - lastFrameTime;
+                frameCount++;
+                
+                if (frameTime >= 1000) {
+                    fps = Math.round((frameCount * 1000) / frameTime);
+                    fpsCounter.textContent = `${fps} FPS`;
+                    frameCount = 0;
+                    frameTime = 0;
+                }
+            }
+            lastFrameTime = now;
+            requestAnimationFrame(updateFPS);
+        }
         
         // Inisialisasi kamera
-        async function initCamera(facingMode = 'environment') {
+        async function initCamera(deviceId = null, facingMode = 'environment') {
             try {
                 // Hentikan stream yang ada jika ada
                 if (stream) {
@@ -323,14 +393,23 @@
                 currentFacingMode = facingMode;
                 cameraInfo.textContent = facingMode === 'environment' ? 'Kamera Belakang' : 'Kamera Depan';
                 
-                stream = await navigator.mediaDevices.getUserMedia({
+                const constraints = {
                     video: {
-                        facingMode: facingMode,
                         width: { ideal: 1920 },
-                        height: { ideal: 1080 }
+                        height: { ideal: 1080 },
+                        frameRate: { ideal: 60, max: 60 },
+                        deviceId: deviceId ? { exact: deviceId } : undefined,
+                        facingMode: deviceId ? undefined : facingMode
                     },
                     audio: true
-                });
+                };
+                
+                stream = await navigator.mediaDevices.getUserMedia(constraints);
+                
+                // Simpan deviceId yang sedang digunakan
+                if (stream.getVideoTracks().length > 0) {
+                    currentDeviceId = stream.getVideoTracks()[0].getSettings().deviceId;
+                }
                 
                 video.srcObject = stream;
                 
@@ -338,27 +417,72 @@
                 captureBtn.disabled = false;
                 startRecordBtn.disabled = false;
                 switchCameraBtn.disabled = false;
+                flipCameraBtn.disabled = false;
+                
+                // Reset zoom
+                currentZoom = 1;
+                zoomSlider.value = 1;
+                applyZoom();
                 
                 // Setup pinch zoom untuk perangkat touch
                 setupPinchZoom();
+                
+                // Mulai penghitungan FPS
+                if (!lastFrameTime) {
+                    updateFPS();
+                }
                 
             } catch (err) {
                 console.error("Error accessing camera:", err);
                 alert("Tidak dapat mengakses kamera. Pastikan Anda memberikan izin.");
                 
                 // Coba mode yang berlawanan jika gagal
-                if (facingMode === 'environment') {
-                    initCamera('user');
+                if (!deviceId && facingMode === 'environment') {
+                    initCamera(null, 'user');
                 } else {
                     switchCameraBtn.disabled = true;
+                    flipCameraBtn.disabled = true;
                 }
             }
         }
         
+        // Dapatkan daftar perangkat kamera
+        async function getCameraDevices() {
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                return devices.filter(device => device.kind === 'videoinput');
+            } catch (err) {
+                console.error("Error enumerating devices:", err);
+                return [];
+            }
+        }
+        
         // Ganti kamera
-        switchCameraBtn.addEventListener('click', () => {
-            const newFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
-            initCamera(newFacingMode);
+        switchCameraBtn.addEventListener('click', async () => {
+            if (!devices.length) {
+                devices = await getCameraDevices();
+            }
+            
+            if (devices.length < 2) {
+                // Jika hanya ada 1 kamera, coba ganti facing mode
+                const newFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
+                initCamera(null, newFacingMode);
+                return;
+            }
+            
+            // Temukan indeks kamera saat ini
+            let currentIndex = devices.findIndex(device => device.deviceId === currentDeviceId);
+            if (currentIndex === -1) currentIndex = 0;
+            
+            // Pilih kamera berikutnya
+            const nextIndex = (currentIndex + 1) % devices.length;
+            initCamera(devices[nextIndex].deviceId);
+        });
+        
+        // Flip tampilan kamera
+        flipCameraBtn.addEventListener('click', () => {
+            flipHorizontal = !flipHorizontal;
+            applyZoom();
         });
         
         // Setup pinch zoom untuk perangkat touch
@@ -382,7 +506,7 @@
                     );
                     
                     const scale = currentDistance / initialDistance;
-                    const newZoom = Math.min(Math.max(currentZoom * scale, 1), 5);
+                    const newZoom = Math.min(Math.max(currentZoom * scale, 1), 10);
                     
                     if (newZoom !== currentZoom) {
                         currentZoom = newZoom;
@@ -399,8 +523,41 @@
         
         // Terapkan zoom ke video
         function applyZoom() {
-            video.style.transform = `scale(${currentZoom})`;
+            const scale = flipHorizontal ? `scale(${currentZoom}, -${currentZoom})` : `scale(${currentZoom})`;
+            video.style.transform = scale;
+            video.style.transformOrigin = 'center center';
         }
+        
+        // Zoom in
+        zoomInBtn.addEventListener('click', () => {
+            if (currentZoom < 10) {
+                currentZoom = Math.min(currentZoom + 0.5, 10);
+                zoomSlider.value = currentZoom;
+                applyZoom();
+            }
+        });
+        
+        // Zoom out
+        zoomOutBtn.addEventListener('click', () => {
+            if (currentZoom > 1) {
+                currentZoom = Math.max(currentZoom - 0.5, 1);
+                zoomSlider.value = currentZoom;
+                applyZoom();
+            }
+        });
+        
+        // Reset zoom
+        zoomResetBtn.addEventListener('click', () => {
+            currentZoom = 1;
+            zoomSlider.value = currentZoom;
+            applyZoom();
+        });
+        
+        // Kontrol zoom dengan slider
+        zoomSlider.addEventListener('input', () => {
+            currentZoom = parseFloat(zoomSlider.value);
+            applyZoom();
+        });
         
         // Tangkap gambar
         captureBtn.addEventListener('click', () => {
@@ -416,13 +573,24 @@
             const offsetX = (video.videoWidth - scaledWidth) / 2;
             const offsetY = (video.videoHeight - scaledHeight) / 2;
             
+            // Flip gambar jika diperlukan
+            if (flipHorizontal) {
+                ctx.translate(canvas.width, 0);
+                ctx.scale(-1, 1);
+            }
+            
             ctx.drawImage(
                 video,
                 offsetX, offsetY, scaledWidth, scaledHeight,
                 0, 0, canvas.width, canvas.height
             );
             
-            const photoData = canvas.toDataURL('image/jpeg');
+            // Reset transformasi
+            if (flipHorizontal) {
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+            }
+            
+            const photoData = canvas.toDataURL('image/jpeg', 0.9);
             
             // Tambahkan ke galeri
             addToGallery(photoData, 'photo');
@@ -437,10 +605,20 @@
             recordedChunks = [];
             
             try {
-                mediaRecorder = new MediaRecorder(stream, {
+                const options = {
                     mimeType: 'video/webm;codecs=vp9',
-                    bitsPerSecond: 2500000 // 2.5 Mbps
-                });
+                    bitsPerSecond: 5000000 // 5 Mbps untuk kualitas lebih tinggi
+                };
+                
+                // Fallback untuk codec yang tidak didukung
+                if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                    options.mimeType = 'video/webm;codecs=vp8';
+                    if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                        options.mimeType = 'video/webm';
+                    }
+                }
+                
+                mediaRecorder = new MediaRecorder(stream, options);
                 
                 mediaRecorder.ondataavailable = (e) => {
                     if (e.data.size > 0) {
@@ -449,7 +627,7 @@
                 };
                 
                 mediaRecorder.onstop = () => {
-                    const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                    const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType });
                     const videoUrl = URL.createObjectURL(blob);
                     
                     // Tambahkan ke galeri
@@ -471,6 +649,7 @@
                 stopRecordBtn.style.display = 'inline-block';
                 captureBtn.disabled = true;
                 switchCameraBtn.disabled = true;
+                flipCameraBtn.disabled = true;
                 
             } catch (err) {
                 console.error("Error starting recording:", err);
@@ -487,13 +666,8 @@
                 stopRecordBtn.style.display = 'none';
                 captureBtn.disabled = false;
                 switchCameraBtn.disabled = false;
+                flipCameraBtn.disabled = false;
             }
-        });
-        
-        // Kontrol zoom dengan slider
-        zoomSlider.addEventListener('input', () => {
-            currentZoom = parseFloat(zoomSlider.value);
-            applyZoom();
         });
         
         // Tambahkan media ke galeri
@@ -616,7 +790,11 @@
         }
         
         // Mulai aplikasi
-        window.addEventListener('DOMContentLoaded', () => {
+        window.addEventListener('DOMContentLoaded', async () => {
+            // Coba dapatkan daftar perangkat kamera
+            devices = await getCameraDevices();
+            
+            // Inisialisasi kamera
             initCamera();
             loadSavedMedia();
         });
