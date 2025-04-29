@@ -1,803 +1,120 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kamera Web dengan Fitur Lengkap</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        
-        h1 {
-            text-align: center;
-            color: #333;
-        }
-        
-        .camera-container {
-            position: relative;
-            width: 100%;
-            height: 0;
-            padding-bottom: 56.25%; /* 16:9 aspect ratio */
-            background-color: #000;
-            border-radius: 8px;
-            overflow: hidden;
-            margin-bottom: 20px;
-        }
-        
-        #video {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.3s ease;
-            transform-origin: center center;
-        }
-        
-        .controls {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-        
-        button {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 50px;
-            background-color: #4285f4;
-            color: white;
-            font-size: 16px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        button:hover {
-            background-color: #3367d6;
-            transform: scale(1.05);
-        }
-        
-        button:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-        }
-        
-        #captureBtn {
-            background-color: #34a853;
-        }
-        
-        #startRecordBtn {
-            background-color: #ea4335;
-        }
-        
-        #stopRecordBtn {
-            display: none;
-            background-color: #ea4335;
-        }
-        
-        #switchCameraBtn {
-            background-color: #fbbc05;
-        }
-        
-        #flipCameraBtn {
-            background-color: #9c27b0;
-        }
-        
-        .zoom-controls {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        
-        .zoom-slider {
-            width: 60%;
-            -webkit-appearance: none;
-            height: 8px;
-            border-radius: 4px;
-            background: #ddd;
-            outline: none;
-        }
-        
-        .zoom-slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: #4285f4;
-            cursor: pointer;
-        }
-        
-        .zoom-buttons {
-            display: flex;
-            gap: 5px;
-        }
-        
-        .zoom-btn {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            padding: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-        }
-        
-        .gallery {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 15px;
-            margin-top: 30px;
-        }
-        
-        .media-item {
-            position: relative;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            background-color: #000;
-        }
-        
-        .media-item img, .media-item video {
-            width: 100%;
-            height: auto;
-            display: block;
-        }
-        
-        .media-item .download-btn {
-            position: absolute;
-            bottom: 5px;
-            right: 5px;
-            background-color: rgba(0,0,0,0.7);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            font-size: 14px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .media-item .delete-btn {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            background-color: rgba(0,0,0,0.7);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            font-size: 14px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .tabs {
-            display: flex;
-            margin-bottom: 20px;
-            border-bottom: 1px solid #ddd;
-        }
-        
-        .tab {
-            padding: 10px 20px;
-            cursor: pointer;
-            background-color: #f1f1f1;
-            border: none;
-            outline: none;
-        }
-        
-        .tab.active {
-            background-color: #4285f4;
-            color: white;
-        }
-        
-        .tab-content {
-            display: none;
-        }
-        
-        .tab-content.active {
-            display: block;
-        }
-        
-        .preview-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.9);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            display: none;
-        }
-        
-        .preview-content {
-            max-width: 90%;
-            max-height: 90%;
-            position: relative;
-        }
-        
-        .preview-content video, .preview-content img {
-            max-width: 100%;
-            max-height: 80vh;
-            display: block;
-        }
-        
-        .close-preview {
-            position: absolute;
-            top: -40px;
-            right: 0;
-            background-color: #ea4335;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        
-        .camera-info {
-            text-align: center;
-            margin-bottom: 15px;
-            font-weight: bold;
-            color: #555;
-        }
-        
-        .fps-counter {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background-color: rgba(0,0,0,0.5);
-            color: white;
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-size: 12px;
-            z-index: 10;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Rekam & Zoom Kamera</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      padding: 20px;
+    }
+
+    video {
+      max-width: 100%;
+      border-radius: 10px;
+    }
+
+    input[type="range"] {
+      width: 300px;
+    }
+
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+      border: none;
+      background-color: #3498db;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #2980b9;
+    }
+  </style>
 </head>
 <body>
-    <h1>Kamera Web dengan Fitur Lengkap</h1>
-    
-    <div class="camera-info" id="cameraInfo">Kamera Belakang</div>
-    
-    <div class="camera-container">
-        <div class="fps-counter" id="fpsCounter">0 FPS</div>
-        <video id="video" autoplay playsinline></video>
-    </div>
-    
-    <div class="zoom-controls">
-        <div class="zoom-buttons">
-            <button class="zoom-btn" id="zoomOutBtn">-</button>
-        </div>
-        <input type="range" id="zoomSlider" class="zoom-slider" min="1" max="10" step="0.1" value="1">
-        <div class="zoom-buttons">
-            <button class="zoom-btn" id="zoomInBtn">+</button>
-            <button class="zoom-btn" id="zoomResetBtn">1x</button>
-        </div>
-    </div>
-    
-    <div class="controls">
-        <button id="captureBtn">Ambil Foto</button>
-        <button id="startRecordBtn">Mulai Rekam</button>
-        <button id="stopRecordBtn" disabled>Stop Rekam</button>
-        <button id="switchCameraBtn">Ganti Kamera</button>
-        <button id="flipCameraBtn">Flip Kamera</button>
-    </div>
-    
-    <div class="tabs">
-        <button class="tab active" onclick="openTab(event, 'photos')">Foto</button>
-        <button class="tab" onclick="openTab(event, 'videos')">Video</button>
-    </div>
-    
-    <div id="photos" class="tab-content active">
-        <h2>Foto yang Diambil</h2>
-        <div id="photoGallery" class="gallery"></div>
-    </div>
-    
-    <div id="videos" class="tab-content">
-        <h2>Video yang Direkam</h2>
-        <div id="videoGallery" class="gallery"></div>
-    </div>
-    
-    <div class="preview-container" id="previewContainer">
-        <div class="preview-content">
-            <button class="close-preview" onclick="closePreview()">×</button>
-            <video id="videoPreview" controls></video>
-            <img id="imagePreview" style="display: none;">
-        </div>
-    </div>
-    
-    <script>
-        // Elemen DOM
-        const video = document.getElementById('video');
-        const zoomSlider = document.getElementById('zoomSlider');
-        const zoomInBtn = document.getElementById('zoomInBtn');
-        const zoomOutBtn = document.getElementById('zoomOutBtn');
-        const zoomResetBtn = document.getElementById('zoomResetBtn');
-        const captureBtn = document.getElementById('captureBtn');
-        const startRecordBtn = document.getElementById('startRecordBtn');
-        const stopRecordBtn = document.getElementById('stopRecordBtn');
-        const switchCameraBtn = document.getElementById('switchCameraBtn');
-        const flipCameraBtn = document.getElementById('flipCameraBtn');
-        const photoGallery = document.getElementById('photoGallery');
-        const videoGallery = document.getElementById('videoGallery');
-        const cameraInfo = document.getElementById('cameraInfo');
-        const previewContainer = document.getElementById('previewContainer');
-        const videoPreview = document.getElementById('videoPreview');
-        const imagePreview = document.getElementById('imagePreview');
-        const fpsCounter = document.getElementById('fpsCounter');
-        
-        // Variabel untuk rekaman video
-        let mediaRecorder;
-        let recordedChunks = [];
-        let isRecording = false;
-        let currentZoom = 1;
-        let stream;
-        let currentFacingMode = 'environment';
-        let savedPhotos = [];
-        let savedVideos = [];
-        let flipHorizontal = false;
-        let fps = 0;
-        let lastFrameTime = 0;
-        let frameCount = 0;
-        let frameTime = 0;
-        let devices = [];
-        let currentDeviceId = '';
-        
-        // FPS counter
-        function updateFPS() {
-            const now = performance.now();
-            if (lastFrameTime) {
-                frameTime += now - lastFrameTime;
-                frameCount++;
-                
-                if (frameTime >= 1000) {
-                    fps = Math.round((frameCount * 1000) / frameTime);
-                    fpsCounter.textContent = `${fps} FPS`;
-                    frameCount = 0;
-                    frameTime = 0;
-                }
-            }
-            lastFrameTime = now;
-            requestAnimationFrame(updateFPS);
+  <h2>Rekam Video & Zoom Kamera</h2>
+  <video id="preview" autoplay muted></video>
+  <div>
+    <label>Zoom:</label>
+    <input type="range" id="zoomControl" min="1" max="3" step="0.01" value="1">
+  </div>
+  <div>
+    <button id="startBtn">Mulai Rekam</button>
+    <button id="stopBtn">Stop</button>
+    <a id="downloadLink" style="display:none;" download="rekaman.webm">Download Rekaman</a>
+  </div>
+  <video id="recordedVideo" controls style="display:none;"></video>
+
+  <script>
+    let mediaRecorder;
+    let recordedBlobs = [];
+    let videoTrack;
+    let stream;
+
+    const preview = document.getElementById('preview');
+    const recordedVideo = document.getElementById('recordedVideo');
+    const zoomControl = document.getElementById('zoomControl');
+    const downloadLink = document.getElementById('downloadLink');
+
+    async function startCamera() {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { zoom: true }, audio: true });
+        preview.srcObject = stream;
+
+        // Ambil track video untuk kontrol zoom
+        videoTrack = stream.getVideoTracks()[0];
+        const capabilities = videoTrack.getCapabilities();
+
+        if (capabilities.zoom) {
+          zoomControl.min = capabilities.zoom.min;
+          zoomControl.max = capabilities.zoom.max;
+          zoomControl.step = capabilities.zoom.step || 0.01;
+          zoomControl.value = videoTrack.getSettings().zoom || 1;
+
+          zoomControl.addEventListener('input', () => {
+            const zoomValue = parseFloat(zoomControl.value);
+            videoTrack.applyConstraints({ advanced: [{ zoom: zoomValue }] });
+          });
+        } else {
+          zoomControl.disabled = true;
         }
-        
-        // Inisialisasi kamera
-        async function initCamera(deviceId = null, facingMode = 'environment') {
-            try {
-                // Hentikan stream yang ada jika ada
-                if (stream) {
-                    stream.getTracks().forEach(track => track.stop());
-                }
-                
-                currentFacingMode = facingMode;
-                cameraInfo.textContent = facingMode === 'environment' ? 'Kamera Belakang' : 'Kamera Depan';
-                
-                const constraints = {
-                    video: {
-                        width: { ideal: 1920 },
-                        height: { ideal: 1080 },
-                        frameRate: { ideal: 60, max: 60 },
-                        deviceId: deviceId ? { exact: deviceId } : undefined,
-                        facingMode: deviceId ? undefined : facingMode
-                    },
-                    audio: true
-                };
-                
-                stream = await navigator.mediaDevices.getUserMedia(constraints);
-                
-                // Simpan deviceId yang sedang digunakan
-                if (stream.getVideoTracks().length > 0) {
-                    currentDeviceId = stream.getVideoTracks()[0].getSettings().deviceId;
-                }
-                
-                video.srcObject = stream;
-                
-                // Aktifkan tombol setelah kamera siap
-                captureBtn.disabled = false;
-                startRecordBtn.disabled = false;
-                switchCameraBtn.disabled = false;
-                flipCameraBtn.disabled = false;
-                
-                // Reset zoom
-                currentZoom = 1;
-                zoomSlider.value = 1;
-                applyZoom();
-                
-                // Setup pinch zoom untuk perangkat touch
-                setupPinchZoom();
-                
-                // Mulai penghitungan FPS
-                if (!lastFrameTime) {
-                    updateFPS();
-                }
-                
-            } catch (err) {
-                console.error("Error accessing camera:", err);
-                alert("Tidak dapat mengakses kamera. Pastikan Anda memberikan izin.");
-                
-                // Coba mode yang berlawanan jika gagal
-                if (!deviceId && facingMode === 'environment') {
-                    initCamera(null, 'user');
-                } else {
-                    switchCameraBtn.disabled = true;
-                    flipCameraBtn.disabled = true;
-                }
-            }
-        }
-        
-        // Dapatkan daftar perangkat kamera
-        async function getCameraDevices() {
-            try {
-                const devices = await navigator.mediaDevices.enumerateDevices();
-                return devices.filter(device => device.kind === 'videoinput');
-            } catch (err) {
-                console.error("Error enumerating devices:", err);
-                return [];
-            }
-        }
-        
-        // Ganti kamera
-        switchCameraBtn.addEventListener('click', async () => {
-            if (!devices.length) {
-                devices = await getCameraDevices();
-            }
-            
-            if (devices.length < 2) {
-                // Jika hanya ada 1 kamera, coba ganti facing mode
-                const newFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
-                initCamera(null, newFacingMode);
-                return;
-            }
-            
-            // Temukan indeks kamera saat ini
-            let currentIndex = devices.findIndex(device => device.deviceId === currentDeviceId);
-            if (currentIndex === -1) currentIndex = 0;
-            
-            // Pilih kamera berikutnya
-            const nextIndex = (currentIndex + 1) % devices.length;
-            initCamera(devices[nextIndex].deviceId);
-        });
-        
-        // Flip tampilan kamera
-        flipCameraBtn.addEventListener('click', () => {
-            flipHorizontal = !flipHorizontal;
-            applyZoom();
-        });
-        
-        // Setup pinch zoom untuk perangkat touch
-        function setupPinchZoom() {
-            let initialDistance = null;
-            
-            video.addEventListener('touchstart', (e) => {
-                if (e.touches.length === 2) {
-                    initialDistance = Math.hypot(
-                        e.touches[0].clientX - e.touches[1].clientX,
-                        e.touches[0].clientY - e.touches[1].clientY
-                    );
-                }
-            });
-            
-            video.addEventListener('touchmove', (e) => {
-                if (e.touches.length === 2 && initialDistance !== null) {
-                    const currentDistance = Math.hypot(
-                        e.touches[0].clientX - e.touches[1].clientX,
-                        e.touches[0].clientY - e.touches[1].clientY
-                    );
-                    
-                    const scale = currentDistance / initialDistance;
-                    const newZoom = Math.min(Math.max(currentZoom * scale, 1), 10);
-                    
-                    if (newZoom !== currentZoom) {
-                        currentZoom = newZoom;
-                        zoomSlider.value = currentZoom;
-                        applyZoom();
-                    }
-                }
-            });
-            
-            video.addEventListener('touchend', () => {
-                initialDistance = null;
-            });
-        }
-        
-        // Terapkan zoom ke video
-        function applyZoom() {
-            const scale = flipHorizontal ? `scale(${currentZoom}, -${currentZoom})` : `scale(${currentZoom})`;
-            video.style.transform = scale;
-            video.style.transformOrigin = 'center center';
-        }
-        
-        // Zoom in
-        zoomInBtn.addEventListener('click', () => {
-            if (currentZoom < 10) {
-                currentZoom = Math.min(currentZoom + 0.5, 10);
-                zoomSlider.value = currentZoom;
-                applyZoom();
-            }
-        });
-        
-        // Zoom out
-        zoomOutBtn.addEventListener('click', () => {
-            if (currentZoom > 1) {
-                currentZoom = Math.max(currentZoom - 0.5, 1);
-                zoomSlider.value = currentZoom;
-                applyZoom();
-            }
-        });
-        
-        // Reset zoom
-        zoomResetBtn.addEventListener('click', () => {
-            currentZoom = 1;
-            zoomSlider.value = currentZoom;
-            applyZoom();
-        });
-        
-        // Kontrol zoom dengan slider
-        zoomSlider.addEventListener('input', () => {
-            currentZoom = parseFloat(zoomSlider.value);
-            applyZoom();
-        });
-        
-        // Tangkap gambar
-        captureBtn.addEventListener('click', () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            
-            const ctx = canvas.getContext('2d');
-            
-            // Hitung area yang akan diambil berdasarkan zoom
-            const scaledWidth = video.videoWidth / currentZoom;
-            const scaledHeight = video.videoHeight / currentZoom;
-            const offsetX = (video.videoWidth - scaledWidth) / 2;
-            const offsetY = (video.videoHeight - scaledHeight) / 2;
-            
-            // Flip gambar jika diperlukan
-            if (flipHorizontal) {
-                ctx.translate(canvas.width, 0);
-                ctx.scale(-1, 1);
-            }
-            
-            ctx.drawImage(
-                video,
-                offsetX, offsetY, scaledWidth, scaledHeight,
-                0, 0, canvas.width, canvas.height
-            );
-            
-            // Reset transformasi
-            if (flipHorizontal) {
-                ctx.setTransform(1, 0, 0, 1, 0, 0);
-            }
-            
-            const photoData = canvas.toDataURL('image/jpeg', 0.9);
-            
-            // Tambahkan ke galeri
-            addToGallery(photoData, 'photo');
-            
-            // Simpan ke penyimpanan lokal
-            savedPhotos.push(photoData);
-            localStorage.setItem('savedPhotos', JSON.stringify(savedPhotos));
-        });
-        
-        // Mulai rekam video
-        startRecordBtn.addEventListener('click', () => {
-            recordedChunks = [];
-            
-            try {
-                const options = {
-                    mimeType: 'video/webm;codecs=vp9',
-                    bitsPerSecond: 5000000 // 5 Mbps untuk kualitas lebih tinggi
-                };
-                
-                // Fallback untuk codec yang tidak didukung
-                if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-                    options.mimeType = 'video/webm;codecs=vp8';
-                    if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-                        options.mimeType = 'video/webm';
-                    }
-                }
-                
-                mediaRecorder = new MediaRecorder(stream, options);
-                
-                mediaRecorder.ondataavailable = (e) => {
-                    if (e.data.size > 0) {
-                        recordedChunks.push(e.data);
-                    }
-                };
-                
-                mediaRecorder.onstop = () => {
-                    const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType });
-                    const videoUrl = URL.createObjectURL(blob);
-                    
-                    // Tambahkan ke galeri
-                    addToGallery(videoUrl, 'video');
-                    
-                    // Simpan ke penyimpanan lokal
-                    const reader = new FileReader();
-                    reader.onload = function() {
-                        const videoData = reader.result;
-                        savedVideos.push(videoData);
-                        localStorage.setItem('savedVideos', JSON.stringify(savedVideos));
-                    };
-                    reader.readAsDataURL(blob);
-                };
-                
-                mediaRecorder.start(100); // Kumpulkan data setiap 100ms
-                isRecording = true;
-                startRecordBtn.style.display = 'none';
-                stopRecordBtn.style.display = 'inline-block';
-                captureBtn.disabled = true;
-                switchCameraBtn.disabled = true;
-                flipCameraBtn.disabled = true;
-                
-            } catch (err) {
-                console.error("Error starting recording:", err);
-                alert("Gagal memulai rekaman. Coba browser yang berbeda.");
-            }
-        });
-        
-        // Stop rekam video
-        stopRecordBtn.addEventListener('click', () => {
-            if (isRecording && mediaRecorder) {
-                mediaRecorder.stop();
-                isRecording = false;
-                startRecordBtn.style.display = 'inline-block';
-                stopRecordBtn.style.display = 'none';
-                captureBtn.disabled = false;
-                switchCameraBtn.disabled = false;
-                flipCameraBtn.disabled = false;
-            }
-        });
-        
-        // Tambahkan media ke galeri
-        function addToGallery(url, type) {
-            const gallery = type === 'photo' ? photoGallery : videoGallery;
-            const mediaItem = document.createElement('div');
-            mediaItem.className = 'media-item';
-            
-            if (type === 'photo') {
-                const img = document.createElement('img');
-                img.src = url;
-                img.onclick = () => showPreview(url, 'photo');
-                mediaItem.appendChild(img);
-            } else {
-                const vid = document.createElement('video');
-                vid.src = url;
-                vid.controls = false;
-                vid.onclick = () => showPreview(url, 'video');
-                mediaItem.appendChild(vid);
-            }
-            
-            const downloadBtn = document.createElement('button');
-            downloadBtn.className = 'download-btn';
-            downloadBtn.innerHTML = '↓';
-            downloadBtn.title = 'Unduh';
-            downloadBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                downloadMedia(url, type);
-            });
-            mediaItem.appendChild(downloadBtn);
-            
-            const deleteBtn = document.createElement('button');
-            deleteBtn.className = 'delete-btn';
-            deleteBtn.innerHTML = '×';
-            deleteBtn.title = 'Hapus';
-            deleteBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                deleteMedia(mediaItem, url, type);
-            });
-            mediaItem.appendChild(deleteBtn);
-            
-            gallery.insertBefore(mediaItem, gallery.firstChild);
-        }
-        
-        // Tampilkan preview media
-        function showPreview(url, type) {
-            if (type === 'photo') {
-                imagePreview.src = url;
-                imagePreview.style.display = 'block';
-                videoPreview.style.display = 'none';
-            } else {
-                videoPreview.src = url;
-                videoPreview.style.display = 'block';
-                imagePreview.style.display = 'none';
-            }
-            previewContainer.style.display = 'flex';
-        }
-        
-        // Tutup preview
-        function closePreview() {
-            previewContainer.style.display = 'none';
-            videoPreview.pause();
-        }
-        
-        // Hapus media
-        function deleteMedia(mediaItem, url, type) {
-            if (confirm('Apakah Anda yakin ingin menghapus media ini?')) {
-                mediaItem.remove();
-                
-                if (type === 'photo') {
-                    savedPhotos = savedPhotos.filter(photo => photo !== url);
-                    localStorage.setItem('savedPhotos', JSON.stringify(savedPhotos));
-                } else {
-                    savedVideos = savedVideos.filter(video => video !== url);
-                    localStorage.setItem('savedVideos', JSON.stringify(savedVideos));
-                }
-            }
-        }
-        
-        // Unduh media
-        function downloadMedia(url, type) {
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${type}_${new Date().toISOString().replace(/[:.]/g, '-')}.${type === 'photo' ? 'jpg' : 'mp4'}`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-        }
-        
-        // Fungsi untuk tab
-        function openTab(evt, tabName) {
-            const tabContents = document.getElementsByClassName('tab-content');
-            for (let i = 0; i < tabContents.length; i++) {
-                tabContents[i].classList.remove('active');
-            }
-            
-            const tabs = document.getElementsByClassName('tab');
-            for (let i = 0; i < tabs.length; i++) {
-                tabs[i].classList.remove('active');
-            }
-            
-            document.getElementById(tabName).classList.add('active');
-            evt.currentTarget.classList.add('active');
-        }
-        
-        // Muat media yang disimpan dari localStorage
-        function loadSavedMedia() {
-            const loadedPhotos = localStorage.getItem('savedPhotos');
-            const loadedVideos = localStorage.getItem('savedVideos');
-            
-            if (loadedPhotos) {
-                savedPhotos = JSON.parse(loadedPhotos);
-                savedPhotos.forEach(photo => addToGallery(photo, 'photo'));
-            }
-            
-            if (loadedVideos) {
-                savedVideos = JSON.parse(loadedVideos);
-                savedVideos.forEach(video => addToGallery(video, 'video'));
-            }
-        }
-        
-        // Mulai aplikasi
-        window.addEventListener('DOMContentLoaded', async () => {
-            // Coba dapatkan daftar perangkat kamera
-            devices = await getCameraDevices();
-            
-            // Inisialisasi kamera
-            initCamera();
-            loadSavedMedia();
-        });
-    </script>
+
+        mediaRecorder = new MediaRecorder(stream);
+
+        mediaRecorder.ondataavailable = (e) => {
+          if (e.data.size > 0) recordedBlobs.push(e.data);
+        };
+
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(recordedBlobs, { type: 'video/webm' });
+          const url = URL.createObjectURL(blob);
+          recordedVideo.src = url;
+          recordedVideo.style.display = 'block';
+          downloadLink.href = url;
+          downloadLink.style.display = 'inline';
+        };
+      } catch (err) {
+        alert('Gagal mengakses kamera: ' + err.message);
+        console.error(err);
+      }
+    }
+
+    document.getElementById('startBtn').onclick = () => {
+      recordedBlobs = [];
+      mediaRecorder.start();
+    };
+
+    document.getElementById('stopBtn').onclick = () => {
+      mediaRecorder.stop();
+    };
+
+    startCamera();
+  </script>
 </body>
 </html>
