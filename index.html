@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Kamera HD + Dark Mode</title>
+  <title>Kamera Zoom + Flash + HD</title>
   <style>
     body {
       background-color: #121212;
@@ -50,7 +50,7 @@
   </style>
 </head>
 <body>
-  <h2>Kamera HD + Dark Mode + Flip + Zoom</h2>
+  <h2>Kamera HD + Zoom Smooth + Flash</h2>
   <video id="preview" autoplay muted playsinline></video>
 
   <div>
@@ -61,6 +61,7 @@
   <div>
     <button id="flipCamBtn">Ganti Kamera</button>
     <button id="mirrorBtn">Flip Vertikal</button>
+    <button id="flashBtn">Toggle Flash</button>
   </div>
 
   <div>
@@ -78,11 +79,23 @@
     let stream;
     let usingFrontCamera = true;
     let isMirrored = false;
+    let isTorchOn = false;
 
     const preview = document.getElementById('preview');
     const recordedVideo = document.getElementById('recordedVideo');
     const zoomControl = document.getElementById('zoomControl');
     const downloadLink = document.getElementById('downloadLink');
+    const flashBtn = document.getElementById('flashBtn');
+
+    let currentZoom = 1;
+    let targetZoom = 1;
+
+    function animateZoom() {
+      if (!videoTrack) return;
+      currentZoom += (targetZoom - currentZoom) * 0.1; // Smooth step
+      videoTrack.applyConstraints({ advanced: [{ zoom: currentZoom }] }).catch(() => {});
+      requestAnimationFrame(animateZoom);
+    }
 
     async function startCamera() {
       if (stream) {
@@ -95,7 +108,8 @@
           facingMode: usingFrontCamera ? 'user' : 'environment',
           width: { ideal: 1920 },
           height: { ideal: 1080 },
-          zoom: true
+          zoom: true,
+          torch: true
         }
       };
 
@@ -106,22 +120,32 @@
         videoTrack = stream.getVideoTracks()[0];
         const capabilities = videoTrack.getCapabilities();
 
+        // Zoom setup
         if (capabilities.zoom) {
           zoomControl.min = capabilities.zoom.min;
           zoomControl.max = capabilities.zoom.max;
           zoomControl.step = capabilities.zoom.step || 0.01;
-          zoomControl.value = videoTrack.getSettings().zoom || 1;
+          currentZoom = targetZoom = videoTrack.getSettings().zoom || 1;
+          zoomControl.value = currentZoom;
 
           zoomControl.disabled = false;
           zoomControl.oninput = () => {
-            videoTrack.applyConstraints({ advanced: [{ zoom: parseFloat(zoomControl.value) }] });
+            targetZoom = parseFloat(zoomControl.value);
           };
+
+          animateZoom(); // Start smooth zoom animation
         } else {
           zoomControl.disabled = true;
         }
 
-        mediaRecorder = new MediaRecorder(stream);
+        // Flash setup
+        if (capabilities.torch !== undefined) {
+          flashBtn.style.display = 'inline';
+        } else {
+          flashBtn.style.display = 'none';
+        }
 
+        mediaRecorder = new MediaRecorder(stream);
         mediaRecorder.ondataavailable = (e) => {
           if (e.data.size > 0) recordedBlobs.push(e.data);
         };
@@ -135,7 +159,7 @@
           downloadLink.style.display = 'inline';
         };
 
-        // Update mirror jika perlu
+        // Mirror
         preview.style.transform = isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
       } catch (err) {
         alert('Gagal mengakses kamera: ' + err.message);
@@ -160,6 +184,15 @@
     document.getElementById('mirrorBtn').onclick = () => {
       isMirrored = !isMirrored;
       preview.style.transform = isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
+    };
+
+    flashBtn.onclick = () => {
+      if (!videoTrack) return;
+      isTorchOn = !isTorchOn;
+      videoTrack.applyConstraints({ advanced: [{ torch: isTorchOn }] }).catch(err => {
+        alert('Flash tidak tersedia di perangkat ini.');
+        console.error(err);
+      });
     };
 
     startCamera();
