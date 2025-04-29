@@ -21,6 +21,209 @@
       border-radius: 10px;
       object-fit: contain;
       transform-origin: center;
+      transition: transform 0.3s ease;
+      will-change: transform;
+      backface-visibility: hidden;
+    }
+    input[type="range"] {
+      width: 300px;
+    }
+    button {
+      padding: 10px 15px;
+      margin: 5px;
+      border: none;
+      background-color: #1f1f1f;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #333;
+    }
+    a {
+      color: #4caf50;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h2>Kamera HD + Zoom + Flash + Preview</h2>
+
+  <video id="preview" autoplay muted playsinline></video>
+
+  <div>
+    <label>Zoom:</label>
+    <input type="range" id="zoomControl" min="1" max="3" step="0.01" value="1">
+  </div>
+
+  <div>
+    <button id="flipCamBtn">Ganti Kamera</button>
+    <button id="mirrorBtn">Flip Horizontal</button>
+    <button id="flashBtn">Toggle Flash</button>
+  </div>
+
+  <div>
+    <button id="startBtn">Mulai Rekam</button>
+    <button id="stopBtn" disabled>Stop</button>
+  </div>
+
+  <div id="status">Status: Siap</div>
+  <a id="downloadLink" style="display:none;" download="rekaman.mp4">Download Rekaman</a>
+
+  <h3>Preview Hasil Rekaman:</h3>
+  <video id="recordedPreview" controls style="display:none;"></video>
+
+  <script>
+    let mediaRecorder;
+    let recordedBlobs = [];
+    let videoTrack;
+    let stream;
+    let usingFrontCamera = true;
+    let isMirrored = false;
+    let isTorchOn = false;
+
+    const preview = document.getElementById('preview');
+    const zoomControl = document.getElementById('zoomControl');
+    const downloadLink = document.getElementById('downloadLink');
+    const statusText = document.getElementById('status');
+    const recordedPreview = document.getElementById('recordedPreview');
+
+    let currentZoom = 1;
+    let targetZoom = 1;
+
+    function lerp(a, b, t) {
+      return a + (b - a) * t;
+    }
+
+    function animateZoom() {
+      if (!videoTrack) return;
+      const diff = Math.abs(currentZoom - targetZoom);
+      if (diff < 0.001) {
+        currentZoom = targetZoom;
+      } else {
+        currentZoom = lerp(currentZoom, targetZoom, 0.05);
+      }
+      videoTrack.applyConstraints({ advanced: [{ zoom: currentZoom }] }).catch(() => {});
+      requestAnimationFrame(animateZoom);
+    }
+
+    async function startCamera() {
+      if (stream) stream.getTracks().forEach(track => track.stop());
+
+      const constraints = {
+        audio: true,
+        video: {
+          facingMode: usingFrontCamera ? 'user' : 'environment',
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+          frameRate: { ideal: 30, max: 60 },
+          zoom: true,
+          torch: true
+        }
+      };
+
+      try {
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+        preview.srcObject = stream;
+        videoTrack = stream.getVideoTracks()[0];
+        const capabilities = videoTrack.getCapabilities();
+
+        if (capabilities.zoom) {
+          zoomControl.min = capabilities.zoom.min;
+          zoomControl.max = capabilities.zoom.max;
+          zoomControl.step = capabilities.zoom.step || 0.01;
+          currentZoom = targetZoom = videoTrack.getSettings().zoom || 1;
+          zoomControl.value = currentZoom;
+          zoomControl.disabled = false;
+          zoomControl.oninput = () => {
+            targetZoom = parseFloat(zoomControl.value);
+          };
+          animateZoom();
+        } else {
+          zoomControl.disabled = true;
+        }
+
+        document.getElementById('flashBtn').style.display =
+          capabilities.torch !== undefined ? 'inline' : 'none';
+
+        preview.style.transform = isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
+      } catch (err) {
+        alert('Gagal mengakses kamera: ' + err.message);
+      }
+    }
+
+    document.getElementById('startBtn').onclick = () => {
+      recordedBlobs = [];
+      const options = { mimeType: 'video/webm;codecs=vp9' };
+      mediaRecorder = new MediaRecorder(stream, options);
+      mediaRecorder.ondataavailable = e => {
+        if (e.data.size > 0) recordedBlobs.push(e.data);
+      };
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(recordedBlobs, { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        downloadLink.href = url;
+        downloadLink.style.display = 'inline';
+        recordedPreview.src = url;
+        recordedPreview.style.display = 'block';
+        statusText.textContent = 'Status: Rekaman selesai';
+      };
+      mediaRecorder.start();
+      statusText.textContent = 'Status: Merekam...';
+      document.getElementById('startBtn').disabled = true;
+      document.getElementById('stopBtn').disabled = false;
+    };
+
+    document.getElementById('stopBtn').onclick = () => {
+      mediaRecorder.stop();
+      document.getElementById('startBtn').disabled = false;
+      document.getElementById('stopBtn').disabled = true;
+    };
+
+    document.getElementById('flipCamBtn').onclick = () => {
+      usingFrontCamera = !usingFrontCamera;
+      startCamera();
+    };
+
+    document.getElementById('mirrorBtn').onclick = () => {
+      isMirrored = !isMirrored;
+      preview.style.transform = isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
+    };
+
+    document.getElementById('flashBtn').onclick = () => {
+      if (!videoTrack) return;
+      isTorchOn = !isTorchOn;
+      videoTrack.applyConstraints({ advanced: [{ torch: isTorchOn }] }).catch(err => {
+        alert('Flash tidak tersedia di perangkat ini.');
+      });
+    };
+
+    startCamera();
+  </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Kamera HD + Preview + Anti Pecah</title>
+  <style>
+    body {
+      background: #121212;
+      color: #ffffff;
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+      padding: 20px;
+    }
+    video {
+      width: 90%;
+      max-width: 600px;
+      background: black;
+      border-radius: 10px;
+      object-fit: contain;
+      transform-origin: center;
       will-change: transform;
       backface-visibility: hidden;
     }
