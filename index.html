@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Kamera HD + Dark Mode</title>
+  <title>Enhanced Camera App</title>
   <style>
     body {
       background-color: #121212;
@@ -13,6 +13,16 @@
       align-items: center;
       gap: 10px;
       padding: 20px;
+      margin: 0;
+      min-height: 100vh;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 800px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
     video {
@@ -20,11 +30,100 @@
       border-radius: 10px;
       background-color: #000;
       transform-origin: center;
-      transition: transform 0.3s ease;
+      transition: transform 0.1s ease;
     }
 
-    input[type="range"] {
-      width: 300px;
+    .video-container {
+      position: relative;
+      width: 100%;
+      overflow: hidden;
+      border-radius: 10px;
+    }
+
+    #preview {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .zoom-controls {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 10;
+    }
+
+    .zoom-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: rgba(0, 0, 0, 0.5);
+      color: white;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .zoom-btn:hover {
+      background-color: rgba(0, 0, 0, 0.7);
+    }
+
+    .zoom-slider-container {
+      width: 100%;
+      padding: 10px 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .zoom-slider {
+      width: 80%;
+      height: 4px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: #444;
+      outline: none;
+      border-radius: 2px;
+    }
+
+    .zoom-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #4caf50;
+      cursor: pointer;
+    }
+
+    .zoom-value {
+      margin-top: 5px;
+      font-size: 12px;
+      color: #aaa;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 15px;
+      width: 100%;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      margin: 5px;
     }
 
     button {
@@ -35,41 +134,120 @@
       color: white;
       border-radius: 5px;
       cursor: pointer;
-      transition: background-color 0.2s ease;
+      transition: all 0.2s ease;
+      min-width: 120px;
     }
 
     button:hover {
       background-color: #333;
     }
 
+    button.active {
+      background-color: #4caf50;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    select {
+      padding: 8px 12px;
+      border-radius: 5px;
+      background-color: #1f1f1f;
+      color: white;
+      border: 1px solid #333;
+    }
+
     a {
       margin-top: 10px;
       color: #4caf50;
       font-weight: bold;
+      text-decoration: none;
+    }
+
+    #recordedVideo {
+      width: 100%;
+      max-width: 800px;
+      margin-top: 20px;
+      border-radius: 10px;
+    }
+
+    .recording-indicator {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      display: none;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .recording-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: red;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.3; }
+      100% { opacity: 1; }
+    }
+
+    .recording-text {
+      color: white;
+      font-size: 14px;
     }
   </style>
 </head>
 <body>
-  <h2>Kamera HD + Dark Mode + Flip + Zoom</h2>
-  <video id="preview" autoplay muted playsinline></video>
-
-  <div>
-    <label>Zoom:</label>
-    <input type="range" id="zoomControl" min="1" max="3" step="0.01" value="1">
+  <div class="container">
+    <h2>Enhanced Camera App</h2>
+    
+    <div class="video-container">
+      <video id="preview" autoplay muted playsinline></video>
+      
+      <div class="recording-indicator" id="recordingIndicator">
+        <div class="recording-dot"></div>
+        <div class="recording-text">REC</div>
+      </div>
+      
+      <div class="zoom-controls">
+        <button class="zoom-btn" id="zoomInBtn">+</button>
+        <button class="zoom-btn" id="zoomOutBtn">-</button>
+      </div>
+    </div>
+    
+    <div class="zoom-slider-container">
+      <input type="range" class="zoom-slider" id="zoomControl" min="1" max="10" step="0.1" value="1">
+      <div class="zoom-value">Zoom: <span id="zoomValue">1x</span></div>
+    </div>
+    
+    <div class="controls">
+      <div class="control-group">
+        <label for="aspectRatio">Aspect Ratio:</label>
+        <select id="aspectRatio">
+          <option value="16:9">16:9 (Widescreen)</option>
+          <option value="4:3">4:3 (Standard)</option>
+        </select>
+      </div>
+      
+      <div class="control-group">
+        <button id="flipCamBtn">Switch Camera</button>
+        <button id="mirrorBtn">Mirror Video</button>
+      </div>
+      
+      <div class="control-group">
+        <button id="startBtn">Start Recording</button>
+        <button id="stopBtn" disabled>Stop Recording</button>
+      </div>
+    </div>
+    
+    <a id="downloadLink" style="display:none;" download="recording.webm">Download Recording</a>
+    <video id="recordedVideo" controls style="display:none;"></video>
   </div>
-
-  <div>
-    <button id="flipCamBtn">Ganti Kamera</button>
-    <button id="mirrorBtn">Flip Vertikal</button>
-  </div>
-
-  <div>
-    <button id="startBtn">Mulai Rekam</button>
-    <button id="stopBtn">Stop</button>
-  </div>
-
-  <a id="downloadLink" style="display:none;" download="rekaman_hd.webm">Download Rekaman</a>
-  <video id="recordedVideo" controls style="display:none;"></video>
 
   <script>
     let mediaRecorder;
@@ -78,23 +256,67 @@
     let stream;
     let usingFrontCamera = true;
     let isMirrored = false;
+    let currentZoom = 1;
+    let targetZoom = 1;
+    let zoomAnimationFrame;
+    let currentAspectRatio = '16:9';
 
     const preview = document.getElementById('preview');
     const recordedVideo = document.getElementById('recordedVideo');
     const zoomControl = document.getElementById('zoomControl');
+    const zoomValue = document.getElementById('zoomValue');
+    const zoomInBtn = document.getElementById('zoomInBtn');
+    const zoomOutBtn = document.getElementById('zoomOutBtn');
     const downloadLink = document.getElementById('downloadLink');
+    const aspectRatioSelect = document.getElementById('aspectRatio');
+    const recordingIndicator = document.getElementById('recordingIndicator');
+
+    // Smooth zoom implementation
+    function applySmoothZoom() {
+      if (Math.abs(currentZoom - targetZoom) < 0.01) {
+        currentZoom = targetZoom;
+        cancelAnimationFrame(zoomAnimationFrame);
+        return;
+      }
+      
+      // Ease-out interpolation for smooth zoom
+      currentZoom += (targetZoom - currentZoom) * 0.1;
+      
+      if (videoTrack) {
+        try {
+          videoTrack.applyConstraints({ advanced: [{ zoom: currentZoom }] });
+        } catch (err) {
+          console.error('Error applying zoom:', err);
+        }
+      }
+      
+      zoomControl.value = currentZoom;
+      zoomValue.textContent = currentZoom.toFixed(1) + 'x';
+      
+      zoomAnimationFrame = requestAnimationFrame(applySmoothZoom);
+    }
 
     async function startCamera() {
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
       }
 
+      // Calculate constraints based on selected aspect ratio
+      let widthConstraint, heightConstraint;
+      if (currentAspectRatio === '16:9') {
+        widthConstraint = { ideal: 1920 };
+        heightConstraint = { ideal: 1080 };
+      } else { // 4:3
+        widthConstraint = { ideal: 1600 };
+        heightConstraint = { ideal: 1200 };
+      }
+
       const constraints = {
         audio: true,
         video: {
           facingMode: usingFrontCamera ? 'user' : 'environment',
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
+          width: widthConstraint,
+          height: heightConstraint,
           zoom: true
         }
       };
@@ -107,20 +329,49 @@
         const capabilities = videoTrack.getCapabilities();
 
         if (capabilities.zoom) {
-          zoomControl.min = capabilities.zoom.min;
-          zoomControl.max = capabilities.zoom.max;
-          zoomControl.step = capabilities.zoom.step || 0.01;
-          zoomControl.value = videoTrack.getSettings().zoom || 1;
+          const settings = videoTrack.getSettings();
+          currentZoom = settings.zoom || 1;
+          targetZoom = currentZoom;
+          
+          zoomControl.min = capabilities.zoom.min || 1;
+          zoomControl.max = capabilities.zoom.max || 10;
+          zoomControl.step = capabilities.zoom.step || 0.1;
+          zoomControl.value = currentZoom;
+          zoomValue.textContent = currentZoom.toFixed(1) + 'x';
 
-          zoomControl.disabled = false;
+          // Setup zoom controls
           zoomControl.oninput = () => {
-            videoTrack.applyConstraints({ advanced: [{ zoom: parseFloat(zoomControl.value) }] });
+            targetZoom = parseFloat(zoomControl.value);
+            if (!zoomAnimationFrame) {
+              applySmoothZoom();
+            }
           };
+
+          zoomInBtn.onclick = () => {
+            targetZoom = Math.min(targetZoom + 1, parseFloat(zoomControl.max));
+            zoomControl.value = targetZoom;
+            if (!zoomAnimationFrame) {
+              applySmoothZoom();
+            }
+          };
+
+          zoomOutBtn.onclick = () => {
+            targetZoom = Math.max(targetZoom - 1, parseFloat(zoomControl.min));
+            zoomControl.value = targetZoom;
+            if (!zoomAnimationFrame) {
+              applySmoothZoom();
+            }
+          };
+
+          // Enable pinch zoom on touch devices
+          preview.addEventListener('touchmove', handleTouchMove, { passive: false });
         } else {
           zoomControl.disabled = true;
+          zoomInBtn.disabled = true;
+          zoomOutBtn.disabled = true;
         }
 
-        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
 
         mediaRecorder.ondataavailable = (e) => {
           if (e.data.size > 0) recordedBlobs.push(e.data);
@@ -133,23 +384,69 @@
           recordedVideo.style.display = 'block';
           downloadLink.href = url;
           downloadLink.style.display = 'inline';
+          recordingIndicator.style.display = 'none';
         };
 
-        // Update mirror jika perlu
+        // Update mirror if needed
         preview.style.transform = isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
       } catch (err) {
-        alert('Gagal mengakses kamera: ' + err.message);
+        alert('Failed to access camera: ' + err.message);
         console.error(err);
       }
     }
 
+    // Touch gesture handling for pinch zoom
+    let initialDistance = null;
+    let initialZoom = 1;
+
+    function handleTouchMove(e) {
+      if (e.touches.length === 2) {
+        e.preventDefault();
+        
+        const touch1 = e.touches[0];
+        const touch2 = e.touches[1];
+        
+        const currentDistance = Math.hypot(
+          touch2.clientX - touch1.clientX,
+          touch2.clientY - touch1.clientY
+        );
+        
+        if (initialDistance === null) {
+          initialDistance = currentDistance;
+          initialZoom = targetZoom;
+        } else {
+          const scale = currentDistance / initialDistance;
+          targetZoom = Math.min(
+            Math.max(initialZoom * scale, parseFloat(zoomControl.min)),
+            parseFloat(zoomControl.max)
+          );
+          zoomControl.value = targetZoom;
+          zoomValue.textContent = targetZoom.toFixed(1) + 'x';
+          
+          if (!zoomAnimationFrame) {
+            applySmoothZoom();
+          }
+        }
+      }
+    }
+
+    document.addEventListener('touchend', () => {
+      initialDistance = null;
+    });
+
+    // Button event handlers
     document.getElementById('startBtn').onclick = () => {
       recordedBlobs = [];
-      mediaRecorder.start();
+      mediaRecorder.start(100); // Collect data every 100ms
+      document.getElementById('startBtn').disabled = true;
+      document.getElementById('stopBtn').disabled = false;
+      recordingIndicator.style.display = 'flex';
     };
 
     document.getElementById('stopBtn').onclick = () => {
       mediaRecorder.stop();
+      document.getElementById('startBtn').disabled = false;
+      document.getElementById('stopBtn').disabled = true;
     };
 
     document.getElementById('flipCamBtn').onclick = () => {
@@ -160,8 +457,15 @@
     document.getElementById('mirrorBtn').onclick = () => {
       isMirrored = !isMirrored;
       preview.style.transform = isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
+      document.getElementById('mirrorBtn').classList.toggle('active');
     };
 
+    aspectRatioSelect.onchange = () => {
+      currentAspectRatio = aspectRatioSelect.value;
+      startCamera();
+    };
+
+    // Initialize camera
     startCamera();
   </script>
 </body>
