@@ -51,13 +51,30 @@
       font-size: 18px;
       color: #888;
     }
+    .zoom-info {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 5px 10px;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+    .video-container {
+      position: relative;
+      width: 90%;
+      max-width: 600px;
+    }
   </style>
 </head>
 <body>
   <h2>Kamera HD + Zoom + Flash + Preview</h2>
 
-  <video id="preview" autoplay muted playsinline></video>
-  <div id="cameraOffMessage" class="camera-off" style="display:none;">Kamera dimatikan</div>
+  <div class="video-container">
+    <video id="preview" autoplay muted playsinline></video>
+    <div id="zoomInfo" class="zoom-info" style="display:none;">1.0x</div>
+    <div id="cameraOffMessage" class="camera-off" style="display:none;">Kamera dimatikan</div>
+  </div>
 
   <div>
     <label>Zoom:</label>
@@ -95,6 +112,7 @@
     const preview = document.getElementById('preview');
     const cameraOffMessage = document.getElementById('cameraOffMessage');
     const zoomControl = document.getElementById('zoomControl');
+    const zoomInfo = document.getElementById('zoomInfo');
     const downloadLink = document.getElementById('downloadLink');
     const statusText = document.getElementById('status');
     const recordedPreview = document.getElementById('recordedPreview');
@@ -102,6 +120,13 @@
 
     let currentZoom = 1;
     let targetZoom = 1;
+    let maxZoom = 3;
+    let minZoom = 1;
+    let zoomStep = 0.1;
+
+    function updateZoomInfo() {
+      zoomInfo.textContent = targetZoom.toFixed(1) + 'x';
+    }
 
     function lerp(a, b, t) {
       return a + (b - a) * t;
@@ -118,6 +143,48 @@
       videoTrack.applyConstraints({ advanced: [{ zoom: currentZoom }] }).catch(() => {});
       requestAnimationFrame(animateZoom);
     }
+
+    function setZoom(newZoom) {
+      newZoom = Math.max(minZoom, Math.min(maxZoom, newZoom));
+      targetZoom = newZoom;
+      zoomControl.value = newZoom;
+      updateZoomInfo();
+    }
+
+    function zoomIn() {
+      setZoom(targetZoom + zoomStep);
+    }
+
+    function zoomOut() {
+      setZoom(targetZoom - zoomStep);
+    }
+
+    // Handle volume button presses
+    document.addEventListener('keydown', (e) => {
+      if (!isCameraActive) return;
+      
+      // Volume Up (keyCode 38 for Android, 175 for some browsers)
+      if (e.keyCode === 38 || e.keyCode === 175) {
+        e.preventDefault();
+        zoomIn();
+      }
+      // Volume Down (keyCode 40 for Android, 174 for some browsers)
+      else if (e.keyCode === 40 || e.keyCode === 174) {
+        e.preventDefault();
+        zoomOut();
+      }
+    });
+
+    // Also handle wheel event for devices that might not trigger key events
+    document.addEventListener('wheel', (e) => {
+      if (!isCameraActive) return;
+      e.preventDefault();
+      if (e.deltaY < 0) {
+        zoomIn();
+      } else {
+        zoomOut();
+      }
+    });
 
     async function startCamera() {
       if (stream) {
@@ -143,18 +210,25 @@
         const capabilities = videoTrack.getCapabilities();
 
         if (capabilities.zoom) {
-          zoomControl.min = capabilities.zoom.min;
-          zoomControl.max = capabilities.zoom.max;
-          zoomControl.step = capabilities.zoom.step || 0.01;
+          minZoom = capabilities.zoom.min;
+          maxZoom = capabilities.zoom.max;
+          zoomStep = capabilities.zoom.step || 0.1;
           currentZoom = targetZoom = videoTrack.getSettings().zoom || 1;
+          zoomControl.min = minZoom;
+          zoomControl.max = maxZoom;
+          zoomControl.step = zoomStep;
           zoomControl.value = currentZoom;
           zoomControl.disabled = false;
           zoomControl.oninput = () => {
             targetZoom = parseFloat(zoomControl.value);
+            updateZoomInfo();
           };
           animateZoom();
+          zoomInfo.style.display = 'block';
+          updateZoomInfo();
         } else {
           zoomControl.disabled = true;
+          zoomInfo.style.display = 'none';
         }
 
         document.getElementById('flashBtn').style.display =
@@ -188,6 +262,7 @@
         // Sembunyikan video dan tampilkan pesan kamera mati
         preview.style.display = 'none';
         cameraOffMessage.style.display = 'flex';
+        zoomInfo.style.display = 'none';
         
         // Nonaktifkan tombol yang relevan
         document.getElementById('flipCamBtn').disabled = true;
