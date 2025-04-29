@@ -44,19 +44,28 @@
       color: #4caf50;
       font-weight: bold;
     }
+    .camera-off {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 18px;
+      color: #888;
+    }
   </style>
 </head>
 <body>
   <h2>Kamera HD + Zoom + Flash + Preview</h2>
 
   <video id="preview" autoplay muted playsinline></video>
+  <div id="cameraOffMessage" class="camera-off" style="display:none;">Kamera dimatikan</div>
 
   <div>
     <label>Zoom:</label>
-    <input type="range" id="zoomControl" min="1" max="3" step="0.01" value="1">
+    <input type="range" id="zoomControl" min="1" max="3" step="0.01" value="1" disabled>
   </div>
 
   <div>
+    <button id="toggleCamBtn">Matikan Kamera</button>
     <button id="flipCamBtn">Ganti Kamera</button>
     <button id="mirrorBtn">Flip Horizontal</button>
     <button id="flashBtn">Toggle Flash</button>
@@ -78,15 +87,18 @@
     let recordedBlobs = [];
     let videoTrack;
     let stream;
-    let usingFrontCamera = true;
+    let usingFrontCamera = false; // Default kamera belakang
     let isMirrored = false;
     let isTorchOn = false;
+    let isCameraActive = true;
 
     const preview = document.getElementById('preview');
+    const cameraOffMessage = document.getElementById('cameraOffMessage');
     const zoomControl = document.getElementById('zoomControl');
     const downloadLink = document.getElementById('downloadLink');
     const statusText = document.getElementById('status');
     const recordedPreview = document.getElementById('recordedPreview');
+    const toggleCamBtn = document.getElementById('toggleCamBtn');
 
     let currentZoom = 1;
     let targetZoom = 1;
@@ -108,21 +120,23 @@
     }
 
     async function startCamera() {
-      if (stream) stream.getTracks().forEach(track => track.stop());
-
-      const constraints = {
-        audio: true,
-        video: {
-          facingMode: usingFrontCamera ? 'user' : 'environment',
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
-          frameRate: { ideal: 30, max: 60 },
-          zoom: true,
-          torch: true
-        }
-      };
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
 
       try {
+        const constraints = {
+          audio: true,
+          video: {
+            facingMode: usingFrontCamera ? 'user' : 'environment',
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+            frameRate: { ideal: 30, max: 60 },
+            zoom: true,
+            torch: true
+          }
+        };
+
         stream = await navigator.mediaDevices.getUserMedia(constraints);
         preview.srcObject = stream;
         videoTrack = stream.getVideoTracks()[0];
@@ -147,12 +161,51 @@
           capabilities.torch !== undefined ? 'inline' : 'none';
 
         preview.style.transform = isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
+        
+        // Tampilkan video dan sembunyikan pesan kamera mati
+        preview.style.display = 'block';
+        cameraOffMessage.style.display = 'none';
+        
+        // Aktifkan tombol yang relevan
+        document.getElementById('flipCamBtn').disabled = false;
+        document.getElementById('mirrorBtn').disabled = false;
+        document.getElementById('flashBtn').disabled = false;
+        document.getElementById('startBtn').disabled = false;
+        
+        isCameraActive = true;
+        toggleCamBtn.textContent = 'Matikan Kamera';
+        statusText.textContent = 'Status: Siap';
       } catch (err) {
         alert('Gagal mengakses kamera: ' + err.message);
       }
     }
 
+    function stopCamera() {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        preview.srcObject = null;
+        
+        // Sembunyikan video dan tampilkan pesan kamera mati
+        preview.style.display = 'none';
+        cameraOffMessage.style.display = 'flex';
+        
+        // Nonaktifkan tombol yang relevan
+        document.getElementById('flipCamBtn').disabled = true;
+        document.getElementById('mirrorBtn').disabled = true;
+        document.getElementById('flashBtn').disabled = true;
+        document.getElementById('startBtn').disabled = true;
+        document.getElementById('stopBtn').disabled = true;
+        zoomControl.disabled = true;
+        
+        isCameraActive = false;
+        toggleCamBtn.textContent = 'Hidupkan Kamera';
+        statusText.textContent = 'Status: Kamera dimatikan';
+      }
+    }
+
     document.getElementById('startBtn').onclick = () => {
+      if (!isCameraActive) return;
+      
       recordedBlobs = [];
       const options = { mimeType: 'video/webm;codecs=vp9' };
       mediaRecorder = new MediaRecorder(stream, options);
@@ -198,6 +251,15 @@
       });
     };
 
+    toggleCamBtn.onclick = () => {
+      if (isCameraActive) {
+        stopCamera();
+      } else {
+        startCamera();
+      }
+    };
+
+    // Mulai dengan kamera belakang saat pertama kali dibuka
     startCamera();
   </script>
 </body>
