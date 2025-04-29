@@ -21,7 +21,6 @@
       border-radius: 10px;
       object-fit: contain;
       transform-origin: center;
-      transition: transform 0.3s ease;
       will-change: transform;
       backface-visibility: hidden;
     }
@@ -123,25 +122,12 @@
     let maxZoom = 3;
     let minZoom = 1;
     let zoomStep = 0.1;
+    let zoomAnimationFrame;
+    let lastZoomTime = 0;
+    const ZOOM_UPDATE_INTERVAL = 16; // ~60fps
 
     function updateZoomInfo() {
       zoomInfo.textContent = targetZoom.toFixed(1) + 'x';
-    }
-
-    function lerp(a, b, t) {
-      return a + (b - a) * t;
-    }
-
-    function animateZoom() {
-      if (!videoTrack) return;
-      const diff = Math.abs(currentZoom - targetZoom);
-      if (diff < 0.001) {
-        currentZoom = targetZoom;
-      } else {
-        currentZoom = lerp(currentZoom, targetZoom, 0.05);
-      }
-      videoTrack.applyConstraints({ advanced: [{ zoom: currentZoom }] }).catch(() => {});
-      requestAnimationFrame(animateZoom);
     }
 
     function setZoom(newZoom) {
@@ -149,6 +135,12 @@
       targetZoom = newZoom;
       zoomControl.value = newZoom;
       updateZoomInfo();
+      
+      // Apply zoom immediately without waiting for animation frame
+      if (videoTrack) {
+        videoTrack.applyConstraints({ advanced: [{ zoom: newZoom }] }).catch(() => {});
+        currentZoom = newZoom;
+      }
     }
 
     function zoomIn() {
@@ -220,10 +212,8 @@
           zoomControl.value = currentZoom;
           zoomControl.disabled = false;
           zoomControl.oninput = () => {
-            targetZoom = parseFloat(zoomControl.value);
-            updateZoomInfo();
+            setZoom(parseFloat(zoomControl.value));
           };
-          animateZoom();
           zoomInfo.style.display = 'block';
           updateZoomInfo();
         } else {
