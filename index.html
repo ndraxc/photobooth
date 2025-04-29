@@ -1,7 +1,8 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Kamera HD + Stabilizer + Zoom + Flash</title>
+  <title>Kamera Web HD dengan Fitur Lengkap</title>
   <style>
     body {
       background: #121212;
@@ -19,6 +20,8 @@
       border-radius: 10px;
       transform-origin: center;
       transition: transform 0.3s ease;
+      will-change: transform;
+      backface-visibility: hidden;
     }
     input[type="range"] {
       width: 300px;
@@ -42,20 +45,30 @@
   </style>
 </head>
 <body>
-  <h2>Kamera HD + Zoom Smooth + Flash + Stabilizer</h2><video id="preview" autoplay muted playsinline></video> <video id="recordedVideo" controls style="display:none;"></video>
+  <h2>Kamera HD + Zoom Smooth + Flash + Stabil Ilusi</h2>
+
+  <video id="preview" autoplay muted playsinline></video>
 
   <div>
     <label>Zoom:</label>
     <input type="range" id="zoomControl" min="1" max="3" step="0.01" value="1">
-  </div>  <div>
+  </div>
+
+  <div>
     <button id="flipCamBtn">Ganti Kamera</button>
     <button id="mirrorBtn">Flip Horizontal</button>
     <button id="flashBtn">Toggle Flash</button>
-  </div>  <div>
+  </div>
+
+  <div>
     <button id="startBtn">Mulai Rekam</button>
     <button id="stopBtn" disabled>Stop</button>
-  </div>  <div id="status">Status: Siap</div>
-  <a id="downloadLink" style="display:none;" download="rekaman_stabil.mp4">Download Rekaman Stabil</a>  <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>  <script>
+  </div>
+
+  <div id="status">Status: Siap</div>
+  <a id="downloadLink" style="display:none;" download="rekaman.mp4">Download Rekaman</a>
+
+  <script>
     let mediaRecorder;
     let recordedBlobs = [];
     let videoTrack;
@@ -65,7 +78,6 @@
     let isTorchOn = false;
 
     const preview = document.getElementById('preview');
-    const recordedVideo = document.getElementById('recordedVideo');
     const zoomControl = document.getElementById('zoomControl');
     const downloadLink = document.getElementById('downloadLink');
     const statusText = document.getElementById('status');
@@ -90,9 +102,8 @@
     }
 
     async function startCamera() {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
+      if (stream) stream.getTracks().forEach(track => track.stop());
+
       const constraints = {
         audio: true,
         video: {
@@ -104,6 +115,7 @@
           torch: true
         }
       };
+
       try {
         stream = await navigator.mediaDevices.getUserMedia(constraints);
         preview.srcObject = stream;
@@ -143,7 +155,13 @@
       mediaRecorder.ondataavailable = e => {
         if (e.data.size > 0) recordedBlobs.push(e.data);
       };
-      mediaRecorder.onstop = processVideo;
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(recordedBlobs, { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        downloadLink.href = url;
+        downloadLink.style.display = 'inline';
+        statusText.textContent = 'Status: Rekaman selesai';
+      };
       mediaRecorder.start();
       statusText.textContent = 'Status: Merekam...';
       document.getElementById('startBtn').disabled = true;
@@ -154,7 +172,6 @@
       mediaRecorder.stop();
       document.getElementById('startBtn').disabled = false;
       document.getElementById('stopBtn').disabled = true;
-      statusText.textContent = 'Status: Memproses video...';
     };
 
     document.getElementById('flipCamBtn').onclick = () => {
@@ -175,38 +192,7 @@
       });
     };
 
-    async function processVideo() {
-      const blob = new Blob(recordedBlobs, { type: 'video/webm' });
-      const arrayBuffer = await blob.arrayBuffer();
-      const { createFFmpeg, fetchFile } = FFmpeg;
-      const ffmpeg = createFFmpeg({ log: true });
-
-      statusText.textContent = 'Status: Memuat FFmpeg...';
-      await ffmpeg.load();
-
-      ffmpeg.FS('writeFile', 'input.webm', new Uint8Array(arrayBuffer));
-      statusText.textContent = 'Status: Menstabilisasi video...';
-
-      await ffmpeg.run(
-        '-i', 'input.webm',
-        '-vf', 'vidstabdetect=shakiness=10:accuracy=15,vidstabtransform=smoothing=30:input="transforms.trf"',
-        '-c:v', 'libx264',
-        '-preset', 'fast',
-        '-c:a', 'copy',
-        'output.mp4'
-      );
-
-      const data = ffmpeg.FS('readFile', 'output.mp4');
-      const stabilizedBlob = new Blob([data.buffer], { type: 'video/mp4' });
-      const url = URL.createObjectURL(stabilizedBlob);
-
-      recordedVideo.src = url;
-      recordedVideo.style.display = 'block';
-      downloadLink.href = url;
-      downloadLink.style.display = 'inline';
-      statusText.textContent = 'Status: Selesai!';
-    }
-
     startCamera();
-  </script></body>
+  </script>
+</body>
 </html>
