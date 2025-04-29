@@ -2,78 +2,334 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Kamera HD + Preview + Anti Pecah</title>
+  <title>Advanced HD Camera with Multiple Features</title>
   <style>
+    :root {
+      --primary-color: #4caf50;
+      --secondary-color: #2196f3;
+      --danger-color: #f44336;
+      --dark-bg: #121212;
+      --card-bg: #1f1f1f;
+      --text-color: #ffffff;
+      --border-radius: 10px;
+    }
+    
     body {
-      background: #121212;
-      color: #ffffff;
-      font-family: sans-serif;
+      background: var(--dark-bg);
+      color: var(--text-color);
+      font-family: 'Segoe UI', Roboto, sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 15px;
       padding: 20px;
+      margin: 0;
     }
-    video {
+    
+    h1, h2, h3 {
+      margin: 0.5em 0;
+      text-align: center;
+    }
+    
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      max-width: 800px;
+    }
+    
+    .camera-container {
+      position: relative;
       width: 90%;
       max-width: 600px;
+      margin-bottom: 15px;
+    }
+    
+    video {
+      width: 100%;
       background: black;
-      border-radius: 10px;
+      border-radius: var(--border-radius);
       object-fit: contain;
       transform-origin: center;
-      transition: transform 0.3s ease;
+      transition: transform 0.3s ease, filter 0.3s ease;
       will-change: transform;
       backface-visibility: hidden;
+      display: block;
     }
-    input[type="range"] {
-      width: 300px;
+    
+    .overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      border-radius: var(--border-radius);
     }
-    button {
+    
+    .grid-overlay {
+      display: none;
+      background-image: 
+        linear-gradient(rgba(255,255,255,0.3) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.3) 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+    
+    .golden-ratio-overlay {
+      display: none;
+      background-image: 
+        radial-gradient(circle at center, transparent 60%, rgba(255,215,0,0.3) 60.5%),
+        linear-gradient(rgba(255,215,0,0.3) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,215,0,0.3) 1px, transparent 1px);
+      background-size: 100% 100%, 20px 20px, 20px 20px;
+    }
+    
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      margin-bottom: 15px;
+    }
+    
+    .control-group {
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      padding: 15px;
+      width: 100%;
+      max-width: 600px;
+    }
+    
+    .control-group h3 {
+      margin-top: 0;
+      margin-bottom: 10px;
+      text-align: left;
+    }
+    
+    .btn {
       padding: 10px 15px;
       margin: 5px;
       border: none;
-      background-color: #1f1f1f;
+      background-color: var(--card-bg);
       color: white;
       border-radius: 5px;
       cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: 500;
     }
-    button:hover {
+    
+    .btn:hover {
       background-color: #333;
     }
-    a {
-      color: #4caf50;
+    
+    .btn-primary {
+      background-color: var(--primary-color);
+    }
+    
+    .btn-primary:hover {
+      background-color: #3e8e41;
+    }
+    
+    .btn-danger {
+      background-color: var(--danger-color);
+    }
+    
+    .btn-danger:hover {
+      background-color: #d32f2f;
+    }
+    
+    .btn-secondary {
+      background-color: var(--secondary-color);
+    }
+    
+    .btn-secondary:hover {
+      background-color: #1976d2;
+    }
+    
+    input[type="range"] {
+      width: 100%;
+      max-width: 300px;
+      margin: 5px 0;
+    }
+    
+    .slider-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 10px 0;
+    }
+    
+    .slider-container label {
+      min-width: 80px;
+    }
+    
+    .filter-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      justify-content: center;
+    }
+    
+    .filter-btn {
+      padding: 8px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+    }
+    
+    .resolution-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      justify-content: center;
+    }
+    
+    .timer-display {
+      font-size: 24px;
       font-weight: bold;
+      text-align: center;
+      margin: 10px 0;
+      display: none;
+    }
+    
+    #status {
+      font-weight: bold;
+      margin: 10px 0;
+      padding: 8px 15px;
+      border-radius: 20px;
+      background-color: rgba(0,0,0,0.3);
+    }
+    
+    #downloadLink {
+      display: none;
+      margin: 10px 0;
+    }
+    
+    .recorded-preview-container {
+      width: 100%;
+      max-width: 600px;
+      margin-top: 20px;
+    }
+    
+    #recordedPreview {
+      width: 100%;
+      border-radius: var(--border-radius);
+      background: black;
+    }
+    
+    .hidden {
+      display: none !important;
+    }
+    
+    @media (max-width: 600px) {
+      .controls {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .btn {
+        width: 100%;
+        max-width: 200px;
+      }
     }
   </style>
 </head>
 <body>
-  <h2>Kamera HD + Zoom + Flash + Preview</h2>
-
-  <video id="preview" autoplay muted playsinline></video>
-
-  <div>
-    <label>Zoom:</label>
-    <input type="range" id="zoomControl" min="1" max="3" step="0.01" value="1">
+  <div class="container">
+    <h1>Advanced HD Camera</h1>
+    <p>Capture high-quality photos and videos with professional features</p>
+    
+    <div class="camera-container">
+      <video id="preview" autoplay muted playsinline></video>
+      <div id="gridOverlay" class="overlay grid-overlay"></div>
+      <div id="goldenRatioOverlay" class="overlay golden-ratio-overlay"></div>
+      <div id="timerDisplay" class="timer-display"></div>
+    </div>
+    
+    <div id="status">Status: Ready</div>
+    
+    <div class="controls">
+      <div class="control-group">
+        <h3>Camera Controls</h3>
+        <button id="flipCamBtn" class="btn">Switch Camera</button>
+        <button id="mirrorBtn" class="btn">Mirror Mode</button>
+        <button id="flashBtn" class="btn">Toggle Flash</button>
+        <button id="takePhotoBtn" class="btn btn-secondary">Take Photo</button>
+        
+        <div class="slider-container">
+          <label for="zoomControl">Zoom:</label>
+          <input type="range" id="zoomControl" min="1" max="3" step="0.01" value="1">
+        </div>
+        
+        <div class="slider-container">
+          <label for="brightnessControl">Brightness:</label>
+          <input type="range" id="brightnessControl" min="0" max="200" step="1" value="100">
+        </div>
+        
+        <div class="slider-container">
+          <label for="contrastControl">Contrast:</label>
+          <input type="range" id="contrastControl" min="0" max="200" step="1" value="100">
+        </div>
+      </div>
+      
+      <div class="control-group">
+        <h3>Video Recording</h3>
+        <button id="startBtn" class="btn btn-primary">Start Recording</button>
+        <button id="stopBtn" class="btn btn-danger" disabled>Stop</button>
+        
+        <div>
+          <label for="timerSelect">Timer:</label>
+          <select id="timerSelect" class="btn">
+            <option value="0">No Timer</option>
+            <option value="3">3 Seconds</option>
+            <option value="5">5 Seconds</option>
+            <option value="10">10 Seconds</option>
+          </select>
+        </div>
+        
+        <div>
+          <label for="resolutionSelect">Resolution:</label>
+          <select id="resolutionSelect" class="btn">
+            <option value="hd">HD (720p)</option>
+            <option value="fullhd" selected>Full HD (1080p)</option>
+            <option value="4k">4K (if available)</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="control-group">
+        <h3>Overlays</h3>
+        <button id="gridBtn" class="btn">Grid Overlay</button>
+        <button id="goldenRatioBtn" class="btn">Golden Ratio</button>
+      </div>
+      
+      <div class="control-group">
+        <h3>Filters</h3>
+        <div class="filter-options">
+          <button data-filter="none" class="filter-btn btn btn-primary">Normal</button>
+          <button data-filter="grayscale" class="filter-btn btn">Grayscale</button>
+          <button data-filter="sepia" class="filter-btn btn">Sepia</button>
+          <button data-filter="vintage" class="filter-btn btn">Vintage</button>
+          <button data-filter="cool" class="filter-btn btn">Cool</button>
+          <button data-filter="warm" class="filter-btn btn">Warm</button>
+          <button data-filter="invert" class="filter-btn btn">Invert</button>
+          <button data-filter="blur" class="filter-btn btn">Blur</button>
+        </div>
+      </div>
+    </div>
+    
+    <a id="downloadLink" class="btn btn-secondary" download="capture">Download</a>
+    
+    <div class="recorded-preview-container">
+      <h3>Preview:</h3>
+      <video id="recordedPreview" controls style="display:none;"></video>
+      <canvas id="photoPreview" style="display:none; max-width:100%; border-radius: var(--border-radius);"></canvas>
+    </div>
   </div>
-
-  <div>
-    <button id="flipCamBtn">Ganti Kamera</button>
-    <button id="mirrorBtn">Flip Horizontal</button>
-    <button id="flashBtn">Toggle Flash</button>
-  </div>
-
-  <div>
-    <button id="startBtn">Mulai Rekam</button>
-    <button id="stopBtn" disabled>Stop</button>
-  </div>
-
-  <div id="status">Status: Siap</div>
-  <a id="downloadLink" style="display:none;" download="rekaman.mp4">Download Rekaman</a>
-
-  <h3>Preview Hasil Rekaman:</h3>
-  <video id="recordedPreview" controls style="display:none;"></video>
 
   <script>
+    // Main variables
     let mediaRecorder;
     let recordedBlobs = [];
     let videoTrack;
@@ -81,16 +337,40 @@
     let usingFrontCamera = true;
     let isMirrored = false;
     let isTorchOn = false;
+    let currentFilter = 'none';
+    let timerInterval;
+    let countdownInterval;
+    let currentZoom = 1;
+    let targetZoom = 1;
+    let brightness = 100;
+    let contrast = 100;
 
+    // DOM elements
     const preview = document.getElementById('preview');
     const zoomControl = document.getElementById('zoomControl');
+    const brightnessControl = document.getElementById('brightnessControl');
+    const contrastControl = document.getElementById('contrastControl');
     const downloadLink = document.getElementById('downloadLink');
     const statusText = document.getElementById('status');
     const recordedPreview = document.getElementById('recordedPreview');
+    const photoPreview = document.getElementById('photoPreview');
+    const timerDisplay = document.getElementById('timerDisplay');
+    const gridOverlay = document.getElementById('gridOverlay');
+    const goldenRatioOverlay = document.getElementById('goldenRatioOverlay');
 
-    let currentZoom = 1;
-    let targetZoom = 1;
+    // Filter presets
+    const filters = {
+      none: 'none',
+      grayscale: 'grayscale(100%)',
+      sepia: 'sepia(100%)',
+      vintage: 'sepia(70%) brightness(80%) contrast(120%)',
+      cool: 'brightness(110%) contrast(110%) saturate(130%) hue-rotate(-10deg)',
+      warm: 'brightness(110%) contrast(110%) saturate(130%) hue-rotate(10deg)',
+      invert: 'invert(100%)',
+      blur: 'blur(2px)'
+    };
 
+    // Animation helper
     function lerp(a, b, t) {
       return a + (b - a) * t;
     }
@@ -107,15 +387,38 @@
       requestAnimationFrame(animateZoom);
     }
 
+    // Camera functions
     async function startCamera() {
       if (stream) stream.getTracks().forEach(track => track.stop());
+
+      // Get selected resolution
+      const resolution = document.getElementById('resolutionSelect').value;
+      let width, height;
+      
+      switch(resolution) {
+        case 'hd':
+          width = 1280;
+          height = 720;
+          break;
+        case 'fullhd':
+          width = 1920;
+          height = 1080;
+          break;
+        case '4k':
+          width = 3840;
+          height = 2160;
+          break;
+        default:
+          width = 1920;
+          height = 1080;
+      }
 
       const constraints = {
         audio: true,
         video: {
           facingMode: usingFrontCamera ? 'user' : 'environment',
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
+          width: { ideal: width },
+          height: { ideal: height },
           frameRate: { ideal: 30, max: 60 },
           zoom: true,
           torch: true
@@ -123,6 +426,7 @@
       };
 
       try {
+        statusText.textContent = 'Status: Starting camera...';
         stream = await navigator.mediaDevices.getUserMedia(constraints);
         preview.srcObject = stream;
         videoTrack = stream.getVideoTracks()[0];
@@ -143,61 +447,196 @@
           zoomControl.disabled = true;
         }
 
+        // Update brightness and contrast controls
+        brightnessControl.oninput = () => {
+          brightness = parseInt(brightnessControl.value);
+          applyImageAdjustments();
+        };
+        
+        contrastControl.oninput = () => {
+          contrast = parseInt(contrastControl.value);
+          applyImageAdjustments();
+        };
+
+        // Check for flash capability
         document.getElementById('flashBtn').style.display =
-          capabilities.torch !== undefined ? 'inline' : 'none';
+          capabilities.torch !== undefined ? 'inline-block' : 'none';
 
         preview.style.transform = isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
+        statusText.textContent = 'Status: Ready';
       } catch (err) {
-        alert('Gagal mengakses kamera: ' + err.message);
+        statusText.textContent = 'Status: Error accessing camera';
+        alert('Failed to access camera: ' + err.message);
       }
     }
 
-    document.getElementById('startBtn').onclick = () => {
+    function applyImageAdjustments() {
+      preview.style.filter = `${filters[currentFilter]} brightness(${brightness}%) contrast(${contrast}%)`;
+    }
+
+    // Recording functions
+    function startRecording() {
       recordedBlobs = [];
       const options = { mimeType: 'video/webm;codecs=vp9' };
       mediaRecorder = new MediaRecorder(stream, options);
+      
       mediaRecorder.ondataavailable = e => {
         if (e.data.size > 0) recordedBlobs.push(e.data);
       };
+      
       mediaRecorder.onstop = () => {
         const blob = new Blob(recordedBlobs, { type: 'video/webm' });
         const url = URL.createObjectURL(blob);
         downloadLink.href = url;
-        downloadLink.style.display = 'inline';
+        downloadLink.textContent = 'Download Video';
+        downloadLink.style.display = 'inline-block';
         recordedPreview.src = url;
         recordedPreview.style.display = 'block';
-        statusText.textContent = 'Status: Rekaman selesai';
+        photoPreview.style.display = 'none';
+        statusText.textContent = 'Status: Recording complete';
       };
-      mediaRecorder.start();
-      statusText.textContent = 'Status: Merekam...';
+      
+      mediaRecorder.start(100); // Collect data every 100ms
+      statusText.textContent = 'Status: Recording...';
       document.getElementById('startBtn').disabled = true;
       document.getElementById('stopBtn').disabled = false;
-    };
+      
+      // Start timer display
+      let seconds = 0;
+      timerInterval = setInterval(() => {
+        seconds++;
+        const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+        const secs = (seconds % 60).toString().padStart(2, '0');
+        statusText.textContent = `Status: Recording... ${mins}:${secs}`;
+      }, 1000);
+    }
 
-    document.getElementById('stopBtn').onclick = () => {
-      mediaRecorder.stop();
-      document.getElementById('startBtn').disabled = false;
-      document.getElementById('stopBtn').disabled = true;
-    };
+    function stopRecording() {
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+        clearInterval(timerInterval);
+        document.getElementById('startBtn').disabled = false;
+        document.getElementById('stopBtn').disabled = true;
+      }
+    }
 
-    document.getElementById('flipCamBtn').onclick = () => {
+    // Photo capture function
+    function takePhoto() {
+      const timerSeconds = parseInt(document.getElementById('timerSelect').value);
+      
+      if (timerSeconds > 0) {
+        startCountdown(timerSeconds);
+      } else {
+        capturePhoto();
+      }
+    }
+    
+    function startCountdown(seconds) {
+      let remaining = seconds;
+      timerDisplay.textContent = remaining;
+      timerDisplay.style.display = 'block';
+      
+      countdownInterval = setInterval(() => {
+        remaining--;
+        timerDisplay.textContent = remaining;
+        
+        if (remaining <= 0) {
+          clearInterval(countdownInterval);
+          timerDisplay.style.display = 'none';
+          capturePhoto();
+        }
+      }, 1000);
+    }
+    
+    function capturePhoto() {
+      photoPreview.width = preview.videoWidth;
+      photoPreview.height = preview.videoHeight;
+      const ctx = photoPreview.getContext('2d');
+      
+      // Apply mirror effect if needed
+      if (isMirrored) {
+        ctx.translate(photoPreview.width, 0);
+        ctx.scale(-1, 1);
+      }
+      
+      ctx.drawImage(preview, 0, 0, photoPreview.width, photoPreview.height);
+      
+      // Apply filter to the captured photo
+      ctx.globalCompositeOperation = 'source-atop';
+      ctx.filter = `${filters[currentFilter]} brightness(${brightness}%) contrast(${contrast}%)`;
+      ctx.drawImage(preview, 0, 0, photoPreview.width, photoPreview.height);
+      ctx.globalCompositeOperation = 'source-over';
+      
+      // Show the photo
+      photoPreview.style.display = 'block';
+      recordedPreview.style.display = 'none';
+      
+      // Create download link
+      photoPreview.toBlob(blob => {
+        const url = URL.createObjectURL(blob);
+        downloadLink.href = url;
+        downloadLink.textContent = 'Download Photo';
+        downloadLink.style.display = 'inline-block';
+        downloadLink.setAttribute('download', 'photo.png');
+      }, 'image/png');
+      
+      statusText.textContent = 'Status: Photo captured';
+    }
+
+    // Event listeners
+    document.getElementById('startBtn').addEventListener('click', startRecording);
+    document.getElementById('stopBtn').addEventListener('click', stopRecording);
+    document.getElementById('takePhotoBtn').addEventListener('click', takePhoto);
+    
+    document.getElementById('flipCamBtn').addEventListener('click', () => {
       usingFrontCamera = !usingFrontCamera;
       startCamera();
-    };
-
-    document.getElementById('mirrorBtn').onclick = () => {
+    });
+    
+    document.getElementById('mirrorBtn').addEventListener('click', () => {
       isMirrored = !isMirrored;
       preview.style.transform = isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
-    };
-
-    document.getElementById('flashBtn').onclick = () => {
+    });
+    
+    document.getElementById('flashBtn').addEventListener('click', () => {
       if (!videoTrack) return;
       isTorchOn = !isTorchOn;
       videoTrack.applyConstraints({ advanced: [{ torch: isTorchOn }] }).catch(err => {
-        alert('Flash tidak tersedia di perangkat ini.');
+        alert('Flash not available on this device.');
       });
-    };
-
+    });
+    
+    document.getElementById('gridBtn').addEventListener('click', () => {
+      gridOverlay.style.display = gridOverlay.style.display === 'none' ? 'block' : 'none';
+      goldenRatioOverlay.style.display = 'none';
+    });
+    
+    document.getElementById('goldenRatioBtn').addEventListener('click', () => {
+      goldenRatioOverlay.style.display = goldenRatioOverlay.style.display === 'none' ? 'block' : 'none';
+      gridOverlay.style.display = 'none';
+    });
+    
+    // Filter buttons
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        currentFilter = btn.dataset.filter;
+        applyImageAdjustments();
+        
+        // Update active state
+        document.querySelectorAll('.filter-btn').forEach(b => {
+          b.classList.remove('btn-primary');
+          if (b.dataset.filter === currentFilter) {
+            b.classList.add('btn-primary');
+          }
+        });
+      });
+    });
+    
+    // Resolution change
+    document.getElementById('resolutionSelect').addEventListener('change', startCamera);
+    
+    // Initialize
+    document.querySelector('.filter-btn[data-filter="none"]').classList.add('btn-primary');
     startCamera();
   </script>
 </body>
