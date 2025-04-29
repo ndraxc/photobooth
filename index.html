@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>HD Camera 60FPS with On/Off Control</title>
+  <title>Advanced HD Camera with All Features</title>
   <style>
     :root {
       --primary-color: #4caf50;
@@ -26,7 +26,7 @@
       margin: 0;
     }
     
-    h1 {
+    h1, h2, h3 {
       margin: 0.5em 0;
       text-align: center;
     }
@@ -46,7 +46,7 @@
       margin-bottom: 15px;
     }
     
-    video {
+    video, canvas {
       width: 100%;
       background: black;
       border-radius: var(--border-radius);
@@ -61,6 +61,35 @@
       background: #000;
       color: white;
       font-size: 1.2em;
+      height: 337px;
+      border-radius: var(--border-radius);
+    }
+    
+    .overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      border-radius: var(--border-radius);
+    }
+    
+    .grid-overlay {
+      display: none;
+      background-image: 
+        linear-gradient(rgba(255,255,255,0.3) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.3) 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+    
+    .golden-ratio-overlay {
+      display: none;
+      background-image: 
+        radial-gradient(circle at center, transparent 60%, rgba(255,215,0,0.3) 60.5%),
+        linear-gradient(rgba(255,215,0,0.3) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,215,0,0.3) 1px, transparent 1px);
+      background-size: 100% 100%, 20px 20px, 20px 20px;
     }
     
     .fps-indicator {
@@ -72,6 +101,19 @@
       border-radius: 20px;
       font-size: 12px;
       z-index: 10;
+    }
+    
+    .timer-display {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 48px;
+      font-weight: bold;
+      color: white;
+      text-shadow: 0 0 10px black;
+      z-index: 10;
+      display: none;
     }
     
     .controls {
@@ -103,16 +145,56 @@
       font-weight: 500;
     }
     
+    .btn:hover {
+      background-color: #333;
+    }
+    
     .btn-primary {
       background-color: var(--primary-color);
+    }
+    
+    .btn-primary:hover {
+      background-color: #3e8e41;
     }
     
     .btn-danger {
       background-color: var(--danger-color);
     }
     
+    .btn-danger:hover {
+      background-color: #d32f2f;
+    }
+    
     .btn-secondary {
       background-color: var(--secondary-color);
+    }
+    
+    .btn-secondary:hover {
+      background-color: #1976d2;
+    }
+    
+    .slider-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 10px 0;
+    }
+    
+    .slider-container label {
+      min-width: 80px;
+    }
+    
+    .filter-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      justify-content: center;
+    }
+    
+    .filter-btn {
+      padding: 8px 12px;
+      border-radius: 20px;
+      font-size: 12px;
     }
     
     #status {
@@ -128,23 +210,47 @@
       margin: 10px 0;
     }
     
-    #recordedPreview {
+    .recorded-preview-container {
       width: 100%;
       max-width: 600px;
+      margin-top: 20px;
+    }
+    
+    #recordedPreview {
+      width: 100%;
       border-radius: var(--border-radius);
       background: black;
+    }
+    
+    .hidden {
+      display: none !important;
+    }
+    
+    @media (max-width: 600px) {
+      .controls {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .btn {
+        width: 100%;
+        max-width: 200px;
+      }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>HD Camera with On/Off Control</h1>
+    <h1>Advanced HD Camera</h1>
+    <p>Complete camera with all features - 60FPS, Photo/Video, Filters & More</p>
     
     <div class="camera-container">
       <video id="preview" autoplay muted playsinline></video>
-      <div id="cameraOffMessage" class="camera-off" style="display:none; height: 337px;">
-        Camera is currently turned off
-      </div>
+      <canvas id="photoPreview" style="display:none;"></canvas>
+      <div id="cameraOffMessage" class="camera-off">Camera is currently turned off</div>
+      <div id="gridOverlay" class="overlay grid-overlay"></div>
+      <div id="goldenRatioOverlay" class="overlay golden-ratio-overlay"></div>
+      <div id="timerDisplay" class="timer-display"></div>
       <div class="fps-indicator" id="fpsIndicator">FPS: --</div>
     </div>
     
@@ -155,26 +261,76 @@
         <h3>Camera Controls</h3>
         <button id="toggleCameraBtn" class="btn btn-primary">Turn Camera Off</button>
         <button id="flipCamBtn" class="btn">Switch Camera</button>
+        <button id="mirrorBtn" class="btn">Mirror Mode</button>
+        <button id="flashBtn" class="btn" style="display:none;">Toggle Flash</button>
         <button id="60fpsBtn" class="btn btn-secondary">Enable 60FPS</button>
       </div>
       
       <div class="control-group">
-        <h3>Recording Settings</h3>
+        <h3>Image Adjustments</h3>
+        <div class="slider-container">
+          <label for="zoomControl">Zoom:</label>
+          <input type="range" id="zoomControl" min="1" max="3" step="0.01" value="1" disabled>
+        </div>
+        <div class="slider-container">
+          <label for="brightnessControl">Brightness:</label>
+          <input type="range" id="brightnessControl" min="0" max="200" step="1" value="100">
+        </div>
+        <div class="slider-container">
+          <label for="contrastControl">Contrast:</label>
+          <input type="range" id="contrastControl" min="0" max="200" step="1" value="100">
+        </div>
+      </div>
+      
+      <div class="control-group">
+        <h3>Capture Modes</h3>
+        <button id="takePhotoBtn" class="btn btn-secondary">Take Photo</button>
         <button id="startBtn" class="btn btn-primary">Start Recording</button>
         <button id="stopBtn" class="btn btn-danger" disabled>Stop</button>
-        <div>Resolution: 
-          <select id="resolutionSelect" class="btn">
-            <option value="480p">480p (640×480)</option>
-            <option value="720p">HD (1280×720)</option>
-            <option value="1080p" selected>Full HD (1920×1080)</option>
+        
+        <div style="margin-top:10px;">
+          <label for="timerSelect">Timer:</label>
+          <select id="timerSelect" class="btn">
+            <option value="0">No Timer</option>
+            <option value="3">3 Seconds</option>
+            <option value="5">5 Seconds</option>
+            <option value="10">10 Seconds</option>
           </select>
+          
+          <label for="resolutionSelect" style="margin-left:10px;">Resolution:</label>
+          <select id="resolutionSelect" class="btn">
+            <option value="480p">480p (SD)</option>
+            <option value="720p">720p (HD)</option>
+            <option value="1080p" selected>1080p (Full HD)</option>
+            <option value="4k">4K (UHD)</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="control-group">
+        <h3>Overlays</h3>
+        <button id="gridBtn" class="btn">Grid Overlay</button>
+        <button id="goldenRatioBtn" class="btn">Golden Ratio</button>
+      </div>
+      
+      <div class="control-group">
+        <h3>Filters</h3>
+        <div class="filter-options">
+          <button data-filter="none" class="filter-btn btn btn-primary">Normal</button>
+          <button data-filter="grayscale" class="filter-btn btn">Grayscale</button>
+          <button data-filter="sepia" class="filter-btn btn">Sepia</button>
+          <button data-filter="vintage" class="filter-btn btn">Vintage</button>
+          <button data-filter="cool" class="filter-btn btn">Cool</button>
+          <button data-filter="warm" class="filter-btn btn">Warm</button>
+          <button data-filter="invert" class="filter-btn btn">Invert</button>
+          <button data-filter="blur" class="filter-btn btn">Blur</button>
         </div>
       </div>
     </div>
     
-    <a id="downloadLink" class="btn btn-secondary" download="recording.mp4">Download Recording</a>
+    <a id="downloadLink" class="btn btn-secondary" download="capture">Download</a>
     
-    <div>
+    <div class="recorded-preview-container">
       <h3>Preview:</h3>
       <video id="recordedPreview" controls style="display:none;"></video>
     </div>
@@ -187,8 +343,17 @@
     let videoTrack;
     let stream = null;
     let usingFrontCamera = true;
-    let prefer60fps = false;
+    let isMirrored = false;
+    let isTorchOn = false;
     let isCameraOn = true;
+    let prefer60fps = false;
+    let currentFilter = 'none';
+    let currentZoom = 1;
+    let targetZoom = 1;
+    let brightness = 100;
+    let contrast = 100;
+    let timerInterval;
+    let countdownInterval;
     let fpsInterval;
     let lastFrameTime = 0;
     let frameCount = 0;
@@ -196,12 +361,35 @@
 
     // DOM elements
     const preview = document.getElementById('preview');
+    const photoPreview = document.getElementById('photoPreview');
     const cameraOffMessage = document.getElementById('cameraOffMessage');
     const fpsIndicator = document.getElementById('fpsIndicator');
-    const toggleCameraBtn = document.getElementById('toggleCameraBtn');
-    const downloadLink = document.getElementById('downloadLink');
     const statusText = document.getElementById('status');
     const recordedPreview = document.getElementById('recordedPreview');
+    const timerDisplay = document.getElementById('timerDisplay');
+    const gridOverlay = document.getElementById('gridOverlay');
+    const goldenRatioOverlay = document.getElementById('goldenRatioOverlay');
+    const zoomControl = document.getElementById('zoomControl');
+    const brightnessControl = document.getElementById('brightnessControl');
+    const contrastControl = document.getElementById('contrastControl');
+    const downloadLink = document.getElementById('downloadLink');
+
+    // Filter presets
+    const filters = {
+      none: 'none',
+      grayscale: 'grayscale(100%)',
+      sepia: 'sepia(100%)',
+      vintage: 'sepia(70%) brightness(80%) contrast(120%)',
+      cool: 'brightness(110%) contrast(110%) saturate(130%) hue-rotate(-10deg)',
+      warm: 'brightness(110%) contrast(110%) saturate(130%) hue-rotate(10deg)',
+      invert: 'invert(100%)',
+      blur: 'blur(2px)'
+    };
+
+    // Animation helper
+    function lerp(a, b, t) {
+      return a + (b - a) * t;
+    }
 
     // FPS counter
     function checkFPS() {
@@ -226,6 +414,26 @@
       requestAnimationFrame(checkFPS);
     }
 
+    // Zoom animation
+    function animateZoom() {
+      if (!videoTrack || !isCameraOn) return;
+      
+      const diff = Math.abs(currentZoom - targetZoom);
+      if (diff < 0.001) {
+        currentZoom = targetZoom;
+      } else {
+        currentZoom = lerp(currentZoom, targetZoom, 0.05);
+      }
+      
+      videoTrack.applyConstraints({ advanced: [{ zoom: currentZoom }] }).catch(() => {});
+      requestAnimationFrame(animateZoom);
+    }
+
+    // Apply image adjustments
+    function applyImageAdjustments() {
+      preview.style.filter = `${filters[currentFilter]} brightness(${brightness}%) contrast(${contrast}%)`;
+    }
+
     // Start camera
     async function startCamera() {
       if (stream) {
@@ -233,6 +441,7 @@
         stream = null;
       }
 
+      // Get selected resolution
       const resolution = document.getElementById('resolutionSelect').value;
       let width, height;
       
@@ -240,6 +449,7 @@
         case '480p': width = 640; height = 480; break;
         case '720p': width = 1280; height = 720; break;
         case '1080p': width = 1920; height = 1080; break;
+        case '4k': width = 3840; height = 2160; break;
         default: width = 1920; height = 1080;
       }
 
@@ -252,7 +462,9 @@
           frameRate: { 
             ideal: prefer60fps ? 60 : 30,
             max: prefer60fps ? 60 : 30
-          }
+          },
+          zoom: true,
+          torch: true
         }
       };
 
@@ -261,22 +473,53 @@
         stream = await navigator.mediaDevices.getUserMedia(constraints);
         preview.srcObject = stream;
         videoTrack = stream.getVideoTracks()[0];
+        const capabilities = videoTrack.getCapabilities();
         
+        // Setup zoom if available
+        if (capabilities.zoom) {
+          zoomControl.min = capabilities.zoom.min;
+          zoomControl.max = capabilities.zoom.max;
+          zoomControl.step = capabilities.zoom.step || 0.01;
+          currentZoom = targetZoom = videoTrack.getSettings().zoom || 1;
+          zoomControl.value = currentZoom;
+          zoomControl.disabled = false;
+          zoomControl.oninput = () => {
+            targetZoom = parseFloat(zoomControl.value);
+          };
+          animateZoom();
+        } else {
+          zoomControl.disabled = true;
+        }
+        
+        // Check flash capability
+        document.getElementById('flashBtn').style.display =
+          capabilities.torch !== undefined ? 'inline-block' : 'none';
+
+        // Start FPS counter
         lastFrameTime = 0;
         frameCount = 0;
         checkFPS();
         
+        // Update UI
         isCameraOn = true;
         preview.style.display = 'block';
+        photoPreview.style.display = 'none';
         cameraOffMessage.style.display = 'none';
-        toggleCameraBtn.textContent = 'Turn Camera Off';
-        statusText.textContent = `Status: Camera on (${prefer60fps ? '60FPS' : '30FPS'})`;
+        document.getElementById('toggleCameraBtn').textContent = 'Turn Camera Off';
+        statusText.textContent = `Status: Ready (${prefer60fps ? '60FPS' : '30FPS'})`;
         
-        // Enable recording buttons
+        // Enable capture buttons
+        document.getElementById('takePhotoBtn').disabled = false;
         document.getElementById('startBtn').disabled = false;
+        
+        // Apply current settings
+        preview.style.transform = isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
+        applyImageAdjustments();
+        
       } catch (err) {
         console.error('Camera error:', err);
         
+        // Fallback to 30FPS if 60FPS fails
         if (prefer60fps) {
           prefer60fps = false;
           statusText.textContent = 'Status: Falling back to 30FPS';
@@ -285,8 +528,12 @@
           isCameraOn = false;
           preview.style.display = 'none';
           cameraOffMessage.style.display = 'flex';
-          toggleCameraBtn.textContent = 'Turn Camera On';
+          document.getElementById('toggleCameraBtn').textContent = 'Turn Camera On';
           statusText.textContent = 'Status: Camera error - ' + err.message;
+          
+          // Disable capture buttons
+          document.getElementById('takePhotoBtn').disabled = true;
+          document.getElementById('startBtn').disabled = true;
         }
       }
     }
@@ -300,17 +547,19 @@
       
       isCameraOn = false;
       preview.style.display = 'none';
+      photoPreview.style.display = 'none';
       cameraOffMessage.style.display = 'flex';
-      toggleCameraBtn.textContent = 'Turn Camera On';
+      document.getElementById('toggleCameraBtn').textContent = 'Turn Camera On';
       fpsIndicator.textContent = 'FPS: --';
       statusText.textContent = 'Status: Camera off';
       
-      // Disable recording buttons
+      // Disable capture buttons
+      document.getElementById('takePhotoBtn').disabled = true;
       document.getElementById('startBtn').disabled = true;
       document.getElementById('stopBtn').disabled = true;
     }
 
-    // Toggle camera on/off
+    // Toggle camera
     function toggleCamera() {
       if (isCameraOn) {
         stopCamera();
@@ -349,16 +598,27 @@
           const blob = new Blob(recordedBlobs, { type: recordedBlobs[0].type });
           const url = URL.createObjectURL(blob);
           downloadLink.href = url;
+          downloadLink.textContent = 'Download Video';
           downloadLink.style.display = 'inline-block';
           recordedPreview.src = url;
           recordedPreview.style.display = 'block';
-          statusText.textContent = 'Status: Recording saved';
+          photoPreview.style.display = 'none';
+          statusText.textContent = 'Status: Recording complete';
         };
         
-        mediaRecorder.start(100);
+        mediaRecorder.start(100); // Collect data every 100ms
         statusText.textContent = `Status: Recording at ${currentFps}FPS...`;
         document.getElementById('startBtn').disabled = true;
         document.getElementById('stopBtn').disabled = false;
+        
+        // Start timer display
+        let seconds = 0;
+        timerInterval = setInterval(() => {
+          seconds++;
+          const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+          const secs = (seconds % 60).toString().padStart(2, '0');
+          statusText.textContent = `Status: Recording... ${mins}:${secs}`;
+        }, 1000);
         
       } catch (err) {
         statusText.textContent = 'Status: Recording failed - ' + err.message;
@@ -369,18 +629,91 @@
     function stopRecording() {
       if (mediaRecorder && mediaRecorder.state !== 'inactive') {
         mediaRecorder.stop();
+        clearInterval(timerInterval);
         document.getElementById('startBtn').disabled = !isCameraOn;
         document.getElementById('stopBtn').disabled = true;
       }
     }
 
+    // Take photo
+    function takePhoto() {
+      const timerSeconds = parseInt(document.getElementById('timerSelect').value);
+      
+      if (timerSeconds > 0) {
+        startCountdown(timerSeconds);
+      } else {
+        capturePhoto();
+      }
+    }
+    
+    function startCountdown(seconds) {
+      let remaining = seconds;
+      timerDisplay.textContent = remaining;
+      timerDisplay.style.display = 'block';
+      
+      countdownInterval = setInterval(() => {
+        remaining--;
+        timerDisplay.textContent = remaining;
+        
+        if (remaining <= 0) {
+          clearInterval(countdownInterval);
+          timerDisplay.style.display = 'none';
+          capturePhoto();
+        }
+      }, 1000);
+    }
+    
+    function capturePhoto() {
+      photoPreview.width = preview.videoWidth;
+      photoPreview.height = preview.videoHeight;
+      const ctx = photoPreview.getContext('2d');
+      
+      // Apply mirror effect if needed
+      if (isMirrored) {
+        ctx.translate(photoPreview.width, 0);
+        ctx.scale(-1, 1);
+      }
+      
+      ctx.drawImage(preview, 0, 0, photoPreview.width, photoPreview.height);
+      
+      // Apply filter to the captured photo
+      ctx.globalCompositeOperation = 'source-atop';
+      ctx.filter = `${filters[currentFilter]} brightness(${brightness}%) contrast(${contrast}%)`;
+      ctx.drawImage(preview, 0, 0, photoPreview.width, photoPreview.height);
+      ctx.globalCompositeOperation = 'source-over';
+      
+      // Show the photo
+      photoPreview.style.display = 'block';
+      recordedPreview.style.display = 'none';
+      
+      // Create download link
+      photoPreview.toBlob(blob => {
+        const url = URL.createObjectURL(blob);
+        downloadLink.href = url;
+        downloadLink.textContent = 'Download Photo';
+        downloadLink.style.display = 'inline-block';
+        downloadLink.setAttribute('download', 'photo.png');
+      }, 'image/png');
+      
+      statusText.textContent = 'Status: Photo captured';
+    }
+
     // Event listeners
-    document.getElementById('startBtn').addEventListener('click', startRecording);
-    document.getElementById('stopBtn').addEventListener('click', stopRecording);
     document.getElementById('toggleCameraBtn').addEventListener('click', toggleCamera);
     document.getElementById('flipCamBtn').addEventListener('click', () => {
       usingFrontCamera = !usingFrontCamera;
       if (isCameraOn) startCamera();
+    });
+    document.getElementById('mirrorBtn').addEventListener('click', () => {
+      isMirrored = !isMirrored;
+      preview.style.transform = isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
+    });
+    document.getElementById('flashBtn').addEventListener('click', () => {
+      if (!videoTrack || !isCameraOn) return;
+      isTorchOn = !isTorchOn;
+      videoTrack.applyConstraints({ advanced: [{ torch: isTorchOn }] }).catch(err => {
+        alert('Flash not available: ' + err.message);
+      });
     });
     document.getElementById('60fpsBtn').addEventListener('click', () => {
       prefer60fps = !prefer60fps;
@@ -388,11 +721,47 @@
       document.getElementById('60fpsBtn').classList.toggle('btn-secondary', !prefer60fps);
       if (isCameraOn) startCamera();
     });
+    document.getElementById('gridBtn').addEventListener('click', () => {
+      gridOverlay.style.display = gridOverlay.style.display === 'none' ? 'block' : 'none';
+      goldenRatioOverlay.style.display = 'none';
+    });
+    document.getElementById('goldenRatioBtn').addEventListener('click', () => {
+      goldenRatioOverlay.style.display = goldenRatioOverlay.style.display === 'none' ? 'block' : 'none';
+      gridOverlay.style.display = 'none';
+    });
+    document.getElementById('takePhotoBtn').addEventListener('click', takePhoto);
+    document.getElementById('startBtn').addEventListener('click', startRecording);
+    document.getElementById('stopBtn').addEventListener('click', stopRecording);
     document.getElementById('resolutionSelect').addEventListener('change', () => {
       if (isCameraOn) startCamera();
     });
+    brightnessControl.addEventListener('input', () => {
+      brightness = parseInt(brightnessControl.value);
+      applyImageAdjustments();
+    });
+    contrastControl.addEventListener('input', () => {
+      contrast = parseInt(contrastControl.value);
+      applyImageAdjustments();
+    });
+    
+    // Filter buttons
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        currentFilter = btn.dataset.filter;
+        applyImageAdjustments();
+        
+        // Update active state
+        document.querySelectorAll('.filter-btn').forEach(b => {
+          b.classList.remove('btn-primary');
+          if (b.dataset.filter === currentFilter) {
+            b.classList.add('btn-primary');
+          }
+        });
+      });
+    });
 
     // Initialize
+    document.querySelector('.filter-btn[data-filter="none"]').classList.add('btn-primary');
     startCamera();
   </script>
 </body>
