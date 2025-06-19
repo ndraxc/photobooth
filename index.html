@@ -3,321 +3,137 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aplikasi Kamera Lengkap</title>
+    <title>Aplikasi Kamera Ringan</title>
     <style>
-        /* CSS Umum */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            background-color: #f0f2f5;
-            color: #333;
+            margin: 0; padding: 20px;
+            display: flex; flex-direction: column; align-items: center;
+            background-color: #f0f2f5; color: #333;
             transition: background-color 0.3s, color 0.3s;
         }
-
-        /* Dark Mode */
         body.dark-mode {
-            background-color: #2c2c2c;
-            color: #f0f0f0;
+            background-color: #2c2c2c; color: #f0f0f0;
         }
-
-        body.dark-mode .container,
-        body.dark-mode .gallery-item,
-        body.dark-mode button,
-        body.dark-mode select,
-        body.dark-mode input[type="range"] {
-            background-color: #3a3a3a;
-            border-color: #555;
-            color: #f0f0f0;
+        body.dark-mode .container, body.dark-mode .gallery-item,
+        body.dark-mode button, body.dark-mode select, body.dark-mode input[type="range"] {
+            background-color: #3a3a3a; border-color: #555; color: #f0f0f0;
         }
-
-        body.dark-mode button:hover:not(:disabled),
-        body.dark-mode select:hover {
+        body.dark-mode button:hover:not(:disabled), body.dark-mode select:hover {
             background-color: #4a4a4a;
         }
-
         .container {
-            background-color: #fff;
-            border-radius: 12px;
+            background-color: #fff; border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-            padding: 30px;
-            margin-bottom: 30px;
-            width: 100%;
-            max-width: 900px;
-            box-sizing: border-box;
-            text-align: center;
+            padding: 30px; margin-bottom: 30px;
+            width: 100%; max-width: 900px;
+            box-sizing: border-box; text-align: center;
             transition: background-color 0.3s, box-shadow 0.3s;
         }
-
-        h1 {
-            color: #007bff;
-            margin-bottom: 25px;
-            font-size: 2.2em;
-        }
-
-        /* Video Stream */
+        h1 { color: #007bff; margin-bottom: 25px; font-size: 2.2em; }
         #video-container {
-            width: 100%;
-            max-width: 640px; /* Batasi lebar video */
-            margin: 0 auto 20px;
-            position: relative;
-            overflow: hidden; /* Penting untuk zoom agar tidak melebar */
-            border-radius: 8px;
+            width: 100%; max-width: 640px; margin: 0 auto 20px;
+            position: relative; overflow: hidden; border-radius: 8px;
             background-color: #000;
         }
-
         video#camera-feed {
-            width: 100%;
-            height: auto;
-            display: block;
-            background-color: black;
-            object-fit: contain; /* Ensure video fits within its container */
-            transform: scale(1); /* Initial scale */
-            transition: transform 0.2s ease-out, filter 0.3s ease-in-out; /* Smooth zoom and filter transition */
-            transform-origin: center center; /* Zoom from center */
+            width: 100%; height: auto; display: block;
+            background-color: black; object-fit: contain;
+            transform: scale(1);
+            transition: transform 0.2s ease-out, filter 0.3s ease-in-out;
+            transform-origin: center center;
         }
-
-        canvas#hidden-canvas {
-            display: none; /* Hidden canvas for taking snapshots */
-        }
-
-        /* Controls */
+        canvas#hidden-canvas { display: none; }
         .controls {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 25px;
+            display: flex; flex-wrap: wrap; justify-content: center;
+            gap: 15px; margin-bottom: 25px;
         }
-
         button, select, input[type="range"] {
-            padding: 12px 20px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            font-size: 1em;
-            cursor: pointer;
+            padding: 12px 20px; border: 1px solid #ccc; border-radius: 8px;
+            font-size: 1em; cursor: pointer;
             transition: background-color 0.2s, border-color 0.2s, color 0.2s;
-            background-color: #e9e9e9;
-            color: #333;
-            -webkit-appearance: none; /* Untuk konsistensi slider */
-            appearance: none;
+            background-color: #e9e9e9; color: #333;
+            -webkit-appearance: none; appearance: none;
         }
-
         button:hover:not(:disabled) {
-            background-color: #dcdcdc;
-            border-color: #b0b0b0;
+            background-color: #dcdcdc; border-color: #b0b0b0;
         }
-
         button:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-            opacity: 0.7;
+            background-color: #cccccc; cursor: not-allowed; opacity: 0.7;
         }
-
-        button.primary {
-            background-color: #007bff;
-            color: white;
-            border-color: #007bff;
-        }
-
-        button.primary:hover:not(:disabled) {
-            background-color: #0056b3;
-            border-color: #0056b3;
-        }
-
-        button.record-active {
-            background-color: #dc3545;
-            color: white;
-            border-color: #dc3545;
-        }
-
-        button.record-active:hover:not(:disabled) {
-            background-color: #c82333;
-            border-color: #c82333;
-        }
-
-        select {
-            padding-right: 30px; /* Ruang untuk panah dropdown */
-        }
-
-        /* Slider Styles */
+        button.primary { background-color: #007bff; color: white; border-color: #007bff; }
+        button.primary:hover:not(:disabled) { background-color: #0056b3; border-color: #0056b3; }
+        button.record-active { background-color: #dc3545; color: white; border-color: #dc3545; }
+        button.record-active:hover:not(:disabled) { background-color: #c82333; border-color: #c82333; }
+        select { padding-right: 30px; }
         input[type="range"] {
-            height: 8px;
-            background: #d3d3d3;
-            outline: none;
-            opacity: 0.7;
-            transition: opacity .2s;
-            width: 180px;
-            vertical-align: middle;
-            border: none;
-            padding: 0;
+            height: 8px; background: #d3d3d3; outline: none; opacity: 0.7;
+            transition: opacity .2s; width: 180px; vertical-align: middle;
+            border: none; padding: 0;
             box-shadow: inset 0 0 5px rgba(0,0,0,0.1);
         }
-
         body.dark-mode input[type="range"] {
-            background: #555;
-            box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
+            background: #555; box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
         }
-
         input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 20px;
-            height: 20px;
-            background: #007bff;
-            border-radius: 50%;
-            cursor: grab;
-            box-shadow: 0 0 5px rgba(0,0,0,0.2);
-            transition: background-color 0.2s;
+            -webkit-appearance: none; appearance: none;
+            width: 20px; height: 20px; background: #007bff; border-radius: 50%;
+            cursor: grab; box-shadow: 0 0 5px rgba(0,0,0,0.2); transition: background-color 0.2s;
         }
-
         input[type="range"]::-moz-range-thumb {
-            width: 20px;
-            height: 20px;
-            background: #007bff;
-            border-radius: 50%;
-            cursor: grab;
-            box-shadow: 0 0 5px rgba(0,0,0,0.2);
-            transition: background-color 0.2s;
+            width: 20px; height: 20px; background: #007bff; border-radius: 50%;
+            cursor: grab; box-shadow: 0 0 5px rgba(0,0,0,0.2); transition: background-color 0.2s;
         }
-
-        input[type="range"]::-webkit-slider-thumb:active {
-            cursor: grabbing;
-        }
-
-        input[type="range"]::-moz-range-thumb:active {
-            cursor: grabbing;
-        }
-
+        input[type="range"]::-webkit-slider-thumb:active,
+        input[type="range"]::-moz-range-thumb:active { cursor: grabbing; }
         .slider-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-right: 15px; /* Untuk memisahkan dari kontrol lain */
+            display: flex; align-items: center; gap: 10px; margin-right: 15px;
         }
-
-        /* Galeri */
         .gallery {
-            width: 100%;
-            max-width: 900px;
-            display: grid;
+            width: 100%; max-width: 900px; display: grid;
             grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-            margin-top: 30px;
+            gap: 20px; padding-top: 20px; border-top: 1px solid #eee; margin-top: 30px;
         }
-
-        body.dark-mode .gallery {
-            border-top: 1px solid #555;
-        }
-
+        body.dark-mode .gallery { border-top: 1px solid #555; }
         .gallery-item {
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            overflow: hidden;
-            background-color: #fafafa;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            border: 1px solid #ddd; border-radius: 8px; overflow: hidden;
+            background-color: #fafafa; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
             transition: transform 0.2s, box-shadow 0.2s, background-color 0.3s;
-            position: relative;
-            padding-bottom: 10px; /* Ruang untuk caption/tanggal */
+            position: relative; padding-bottom: 10px;
         }
-
-        .gallery-item:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.12);
-        }
-
-        .gallery-item img,
-        .gallery-item video {
-            width: 100%;
-            height: 150px; /* Ukuran thumbnail */
-            object-fit: cover;
-            display: block;
+        .gallery-item:hover { transform: translateY(-5px); box-shadow: 0 6px 15px rgba(0, 0, 0, 0.12); }
+        .gallery-item img, .gallery-item video {
+            width: 100%; height: 150px; object-fit: cover; display: block;
             border-bottom: 1px solid #eee;
         }
-
-        body.dark-mode .gallery-item img,
-        body.dark-mode .gallery-item video {
+        body.dark-mode .gallery-item img, body.dark-mode .gallery-item video {
             border-bottom: 1px solid #555;
         }
-
         .gallery-item .item-info {
-            padding: 8px;
-            font-size: 0.9em;
-            color: #666;
-            text-align: left;
+            padding: 8px; font-size: 0.9em; color: #666; text-align: left;
         }
-
-        body.dark-mode .gallery-item .item-info {
-            color: #bbb;
-        }
-
+        body.dark-mode .gallery-item .item-info { color: #bbb; }
         .gallery-item .item-actions {
-            display: flex;
-            justify-content: space-around;
-            padding: 5px;
+            display: flex; justify-content: space-around; padding: 5px;
         }
-
         .gallery-item .item-actions button {
-            background: none;
-            border: none;
-            padding: 5px 8px;
-            font-size: 0.85em;
-            cursor: pointer;
-            color: #007bff;
+            background: none; border: none; padding: 5px 8px;
+            font-size: 0.85em; cursor: pointer; color: #007bff;
         }
+        .gallery-item .item-actions button:hover { text-decoration: underline; }
 
-        .gallery-item .item-actions button:hover {
-            text-decoration: underline;
-        }
-
-        /* Responsive adjustments */
         @media (max-width: 768px) {
-            body {
-                padding: 10px;
-            }
-
-            .container {
-                padding: 20px;
-            }
-
-            h1 {
-                font-size: 1.8em;
-            }
-
-            .controls {
-                flex-direction: column;
-                align-items: center;
-            }
-
+            body { padding: 10px; }
+            .container { padding: 20px; }
+            h1 { font-size: 1.8em; }
+            .controls { flex-direction: column; align-items: center; }
             button, select, input[type="range"] {
-                width: 90%;
-                max-width: 300px;
-                box-sizing: border-box;
+                width: 90%; max-width: 300px; box-sizing: border-box;
             }
-
-            .slider-group {
-                flex-direction: column;
-                width: 90%;
-                max-width: 300px;
-            }
-
-            input[type="range"] {
-                width: 100%;
-            }
-
-            .gallery {
-                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            }
-
-            .gallery-item img,
-            .gallery-item video {
-                height: 120px;
-            }
+            .slider-group { flex-direction: column; width: 90%; max-width: 300px; }
+            input[type="range"] { width: 100%; }
+            .gallery { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+            .gallery-item img, .gallery-item video { height: 120px; }
         }
     </style>
 </head>
@@ -339,21 +155,16 @@
                 <option value="invert(100%)">Invert</option>
                 <option value="blur(5px)">Blur</option>
             </select>
-
             <div class="slider-group">
                 <label for="brightness-slider">Kecerahan:</label>
                 <input type="range" id="brightness-slider" min="50" max="200" value="100">
             </div>
-
             <div class="slider-group">
                 <label for="zoom-slider">Zoom (<span id="zoom-value">1.0</span>x):</label>
                 <input type="range" id="zoom-slider" min="10" max="50" value="10">
             </div>
-
             <button id="take-photo-btn" class="primary">Ambil Gambar</button>
-
             <button id="record-video-btn" class="primary">Mulai Rekam</button>
-
             <button id="switch-camera-btn" style="display: none;">Ganti Kamera</button>
         </div>
     </div>
@@ -366,396 +177,227 @@
     </div>
 
     <script>
-        // DOM Elements
-        const cameraFeed = document.getElementById('camera-feed');
-        const hiddenCanvas = document.getElementById('hidden-canvas');
-        const filterSelect = document.getElementById('filter-select');
-        const brightnessSlider = document.getElementById('brightness-slider');
-        const zoomSlider = document.getElementById('zoom-slider');
-        const zoomValueSpan = document.getElementById('zoom-value');
-        const takePhotoBtn = document.getElementById('take-photo-btn');
-        const recordVideoBtn = document.getElementById('record-video-btn');
-        const switchCameraBtn = document.getElementById('switch-camera-btn');
-        const mediaGallery = document.getElementById('media-gallery');
-        const noMediaMessage = document.getElementById('no-media-message');
-        const darkModeToggle = document.getElementById('dark-mode-toggle');
+        const camFeed = document.getElementById('camera-feed');
+        const hCanvas = document.getElementById('hidden-canvas');
+        const filterSel = document.getElementById('filter-select');
+        const brightSld = document.getElementById('brightness-slider');
+        const zoomSld = document.getElementById('zoom-slider');
+        const zoomValSpan = document.getElementById('zoom-value');
+        const photoBtn = document.getElementById('take-photo-btn');
+        const recordBtn = document.getElementById('record-video-btn');
+        const switchBtn = document.getElementById('switch-camera-btn');
+        const mediaGal = document.getElementById('media-gallery');
+        const noMediaMsg = document.getElementById('no-media-message');
+        const darkModeTgl = document.getElementById('dark-mode-toggle');
 
-        // State variables
         let currentStream;
         let mediaRecorder;
         let recordedChunks = [];
         let isRecording = false;
-        let availableCameras = [];
-        let currentCameraIndex = 0;
-        let currentZoom = 1.0; // Keep track of current zoom level
-        let trackCapabilities = null; // To store camera track capabilities
+        let cameras = [];
+        let currentCamIdx = 0;
+        let currentZoom = 1.0;
+        let trackCaps = null;
 
-        // --- Inisialisasi Kamera ---
-        /**
-         * Menginisialisasi stream kamera dan menampilkan di elemen video.
-         * Mengatur filter, brightness, dan zoom awal.
-         * @param {string} deviceId - ID perangkat kamera yang akan digunakan (opsional).
-         * @param {string} facingMode - 'user' (depan) atau 'environment' (belakang) (opsional).
-         */
         async function initCamera(deviceId, facingMode) {
-            // Hentikan stream yang ada jika ada
             if (currentStream) {
-                currentStream.getTracks().forEach(track => track.stop());
+                currentStream.getTracks().forEach(t => t.stop());
             }
-
-            // Constraints untuk getUserMedia
             const constraints = {
                 video: {
                     deviceId: deviceId ? { exact: deviceId } : undefined,
-                    facingMode: facingMode || 'user', // Default 'user' (depan)
-                    width: { ideal: 1280 }, // Resolusi ideal
-                    height: { ideal: 720 }
+                    facingMode: facingMode || 'user',
+                    width: { ideal: 1280 }, height: { ideal: 720 }
                 },
-                audio: true // Untuk rekaman video
+                audio: true
             };
-
             try {
-                // Mendapatkan stream media dari webcam
                 currentStream = await navigator.mediaDevices.getUserMedia(constraints);
-                cameraFeed.srcObject = currentStream;
-
-                // Setelah stream dimuat, coba dapatkan capabilities track
-                cameraFeed.onloadedmetadata = () => {
-                    const videoTrack = currentStream.getVideoTracks()[0];
-                    if (videoTrack) {
-                        trackCapabilities = videoTrack.getCapabilities();
-                        console.log('Camera capabilities:', trackCapabilities);
-
-                        // Cek apakah zoom didukung secara native
-                        if (trackCapabilities.zoom) {
-                            console.log('Native camera zoom supported.');
-                            // Atur nilai slider zoom berdasarkan rentang native jika ada
-                            zoomSlider.min = trackCapabilities.zoom.min || 1.0;
-                            zoomSlider.max = trackCapabilities.zoom.max || 5.0;
-                            zoomSlider.step = trackCapabilities.zoom.step || 0.1;
-                            zoomSlider.value = currentZoom * 10; // Sesuaikan skala slider
+                camFeed.srcObject = currentStream;
+                camFeed.onloadedmetadata = () => {
+                    const vTrack = currentStream.getVideoTracks()[0];
+                    if (vTrack) {
+                        trackCaps = vTrack.getCapabilities();
+                        if (trackCaps.zoom) {
+                            zoomSld.min = trackCaps.zoom.min || 1.0;
+                            zoomSld.max = trackCaps.zoom.max || 5.0;
+                            zoomSld.step = trackCaps.zoom.step || 0.1;
+                            zoomSld.value = currentZoom * 10;
                             updateZoomDisplay(currentZoom);
                         } else {
-                            console.log('Native camera zoom not supported. Falling back to CSS transform.');
-                            // Reset slider ke default CSS transform range
-                            zoomSlider.min = 10;
-                            zoomSlider.max = 50;
-                            zoomSlider.step = 1;
-                            zoomSlider.value = currentZoom * 10;
+                            zoomSld.min = 10; zoomSld.max = 50; zoomSld.step = 1;
+                            zoomSld.value = currentZoom * 10;
                             updateZoomDisplay(currentZoom);
                         }
                     }
                 };
-
-                // Perbarui daftar kamera yang tersedia
                 await updateCameraList();
-                // Terapkan filter dan brightness yang sedang aktif
                 applyCurrentFilterAndBrightness();
-                // Terapkan zoom yang sedang aktif
                 applyCurrentZoom();
-
-                // Aktifkan tombol-tombol setelah kamera siap
-                takePhotoBtn.disabled = false;
-                recordVideoBtn.disabled = false;
+                photoBtn.disabled = false;
+                recordBtn.disabled = false;
             } catch (err) {
                 console.error('Error accessing camera:', err);
                 alert('Tidak dapat mengakses kamera. Pastikan Anda telah memberikan izin.');
-                takePhotoBtn.disabled = true;
-                recordVideoBtn.disabled = true;
+                photoBtn.disabled = true; recordBtn.disabled = true;
             }
         }
 
-        // --- Fungsi Ambil Gambar ---
-        /**
-         * Mengambil snapshot dari feed kamera dan menambahkannya ke galeri.
-         */
-        takePhotoBtn.addEventListener('click', () => {
-            if (!currentStream) {
-                alert('Kamera belum siap.');
-                return;
-            }
-
-            // Atur ukuran canvas agar sesuai dengan video feed
-            hiddenCanvas.width = cameraFeed.videoWidth;
-            hiddenCanvas.height = cameraFeed.videoHeight;
-            const context = hiddenCanvas.getContext('2d');
-
-            // Terapkan filter dan brightness ke canvas sebelum mengambil gambar
-            const currentFilter = filterSelect.value;
-            const currentBrightness = brightnessSlider.value;
-            context.filter = `${currentFilter} brightness(${currentBrightness}%)`;
-
-            // Gambar frame video ke canvas
-            context.drawImage(cameraFeed, 0, 0, hiddenCanvas.width, hiddenCanvas.height);
-
-            // Reset filter canvas agar tidak mempengaruhi gambar selanjutnya
-            context.filter = 'none';
-
-            // Dapatkan data URL gambar
-            const imageDataURL = hiddenCanvas.toDataURL('image/png');
-
-            // Buat elemen gambar baru dan tambahkan ke galeri
-            const timestamp = new Date().toLocaleString();
-            addMediaToGallery(imageDataURL, 'image', timestamp);
+        photoBtn.addEventListener('click', () => {
+            if (!currentStream) { alert('Kamera belum siap.'); return; }
+            hCanvas.width = camFeed.videoWidth;
+            hCanvas.height = camFeed.videoHeight;
+            const ctx = hCanvas.getContext('2d');
+            const currentFilter = filterSel.value;
+            const currentBrightness = brightSld.value;
+            ctx.filter = `${currentFilter} brightness(${currentBrightness}%)`;
+            ctx.drawImage(camFeed, 0, 0, hCanvas.width, hCanvas.height);
+            ctx.filter = 'none';
+            addMediaToGallery(hCanvas.toDataURL('image/png'), 'image', new Date().toLocaleString());
         });
 
-        // --- Fungsi Rekam Video ---
-        recordVideoBtn.addEventListener('click', () => {
-            if (!currentStream) {
-                alert('Kamera belum siap.');
-                return;
-            }
-
+        recordBtn.addEventListener('click', () => {
+            if (!currentStream) { alert('Kamera belum siap.'); return; }
             if (!isRecording) {
-                // Mulai Rekam
                 recordedChunks = [];
-                // Atur mimeType untuk WebM agar kompatibel
                 const options = { mimeType: 'video/webm; codecs=vp9' };
                 try {
                     mediaRecorder = new MediaRecorder(currentStream, options);
                 } catch (e) {
-                    // Fallback ke codec lain jika vp9 tidak didukung
                     console.warn('VP9 codec not supported, trying VP8:', e);
                     const fallbackOptions = { mimeType: 'video/webm; codecs=vp8' };
-                    try {
-                        mediaRecorder = new MediaRecorder(currentStream, fallbackOptions);
-                    } catch (e2) {
+                    try { mediaRecorder = new MediaRecorder(currentStream, fallbackOptions); }
+                    catch (e2) {
                         console.error('Neither VP9 nor VP8 codecs supported:', e2);
                         alert('Browser Anda tidak mendukung perekaman video dengan codec yang tersedia.');
                         return;
                     }
                 }
-
-                mediaRecorder.ondataavailable = (event) => {
-                    if (event.data.size > 0) {
-                        recordedChunks.push(event.data);
-                    }
-                };
-
+                mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunks.push(e.data); };
                 mediaRecorder.onstop = () => {
-                    // Buat Blob dari potongan-potongan video
                     const superBuffer = new Blob(recordedChunks, { type: 'video/webm' });
-                    const videoURL = URL.createObjectURL(superBuffer);
-
-                    // Tambahkan video ke galeri
-                    const timestamp = new Date().toLocaleString();
-                    addMediaToGallery(videoURL, 'video', timestamp);
+                    addMediaToGallery(URL.createObjectURL(superBuffer), 'video', new Date().toLocaleString());
                 };
-
                 mediaRecorder.start();
-                recordVideoBtn.textContent = 'Stop Rekam';
-                recordVideoBtn.classList.add('record-active');
-                takePhotoBtn.disabled = true; // Nonaktifkan tombol ambil gambar saat merekam
-                isRecording = true;
-                console.log('Mulai merekam...');
+                recordBtn.textContent = 'Stop Rekam'; recordBtn.classList.add('record-active');
+                photoBtn.disabled = true; isRecording = true;
             } else {
-                // Stop Rekam
                 mediaRecorder.stop();
-                recordVideoBtn.textContent = 'Mulai Rekam';
-                recordVideoBtn.classList.remove('record-active');
-                takePhotoBtn.disabled = false; // Aktifkan kembali
-                isRecording = false;
-                console.log('Merekam dihentikan.');
+                recordBtn.textContent = 'Mulai Rekam'; recordBtn.classList.remove('record-active');
+                photoBtn.disabled = false; isRecording = false;
             }
         });
 
-        // --- Kontrol Filter & Brightness ---
-        /**
-         * Menerapkan filter dan brightness yang dipilih ke feed kamera.
-         */
         function applyCurrentFilterAndBrightness() {
-            const selectedFilter = filterSelect.value;
-            const brightnessValue = brightnessSlider.value;
-            let filterString = `brightness(${brightnessValue}%)`;
-
-            if (selectedFilter !== 'none') {
-                // Jika filter bukan 'none' dan bukan 'brightness' itu sendiri (yang dihandle slider)
-                if (!selectedFilter.includes('brightness')) {
-                    filterString = `${selectedFilter} ${filterString}`;
-                } else {
-                    filterString = selectedFilter; // Override jika filter adalah brightness (misal untuk reset)
-                }
+            const selFilter = filterSel.value;
+            const brightVal = brightSld.value;
+            let filterStr = `brightness(${brightVal}%)`;
+            if (selFilter !== 'none') {
+                if (!selFilter.includes('brightness')) filterStr = `${selFilter} ${filterStr}`;
+                else filterStr = selFilter;
             }
-            cameraFeed.style.filter = filterString;
+            camFeed.style.filter = filterStr;
         }
+        filterSel.addEventListener('change', applyCurrentFilterAndBrightness);
+        brightSld.addEventListener('input', applyCurrentFilterAndBrightness);
 
-        filterSelect.addEventListener('change', applyCurrentFilterAndBrightness);
-        brightnessSlider.addEventListener('input', applyCurrentFilterAndBrightness);
-
-        // --- Kontrol Zoom (Fitur Baru) ---
-        /**
-         * Menerapkan tingkat zoom ke feed kamera.
-         * Prioritas: native camera zoom, fallback: CSS transform.
-         */
         function applyCurrentZoom() {
-            // Skala nilai slider dari 10-50 ke 1.0-5.0
-            currentZoom = zoomSlider.value / 10;
+            currentZoom = zoomSld.value / 10;
             updateZoomDisplay(currentZoom);
-
-            const videoTrack = currentStream ? currentStream.getVideoTracks()[0] : null;
-
-            if (videoTrack && trackCapabilities && trackCapabilities.zoom) {
-                // Gunakan native camera zoom jika didukung
-                const constraints = {
-                    advanced: [{ zoom: currentZoom }]
-                };
-                videoTrack.applyConstraints(constraints)
-                    .then(() => console.log('Native zoom applied:', currentZoom))
+            const vTrack = currentStream ? currentStream.getVideoTracks()[0] : null;
+            if (vTrack && trackCaps && trackCaps.zoom) {
+                vTrack.applyConstraints({ advanced: [{ zoom: currentZoom }] })
                     .catch(e => console.error('Error applying native zoom:', e));
-                // Pastikan CSS transform direset jika menggunakan native zoom
-                cameraFeed.style.transform = 'scale(1)';
+                camFeed.style.transform = 'scale(1)';
             } else {
-                // Fallback ke CSS transform jika native zoom tidak didukung
-                cameraFeed.style.transform = `scale(${currentZoom})`;
+                camFeed.style.transform = `scale(${currentZoom})`;
             }
         }
+        function updateZoomDisplay(zVal) { zoomValSpan.textContent = zVal.toFixed(1); }
+        zoomSld.addEventListener('input', applyCurrentZoom);
 
-        function updateZoomDisplay(zoomVal) {
-            zoomValueSpan.textContent = zoomVal.toFixed(1);
-        }
-
-        zoomSlider.addEventListener('input', applyCurrentZoom);
-
-
-        // --- Switch Kamera ---
-        /**
-         * Memperbarui daftar kamera yang tersedia dan menampilkan tombol switch jika ada lebih dari satu.
-         */
         async function updateCameraList() {
-            availableCameras = [];
+            cameras = [];
             try {
                 const devices = await navigator.mediaDevices.enumerateDevices();
-                devices.forEach(device => {
-                    if (device.kind === 'videoinput') {
-                        availableCameras.push(device);
-                    }
-                });
-
-                if (availableCameras.length > 1) {
-                    switchCameraBtn.style.display = 'block';
-                } else {
-                    switchCameraBtn.style.display = 'none';
-                }
-            } catch (err) {
-                console.error('Error enumerating devices:', err);
-            }
+                devices.forEach(d => { if (d.kind === 'videoinput') cameras.push(d); });
+                if (cameras.length > 1) switchBtn.style.display = 'block';
+                else switchBtn.style.display = 'none';
+            } catch (err) { console.error('Error enumerating devices:', err); }
         }
-
-        switchCameraBtn.addEventListener('click', async () => {
-            if (availableCameras.length > 1) {
-                currentCameraIndex = (currentCameraIndex + 1) % availableCameras.length;
-                const nextCamera = availableCameras[currentCameraIndex];
-                await initCamera(nextCamera.deviceId);
+        switchBtn.addEventListener('click', async () => {
+            if (cameras.length > 1) {
+                currentCamIdx = (currentCamIdx + 1) % cameras.length;
+                await initCamera(cameras[currentCamIdx].deviceId);
             }
         });
 
-        // --- Galeri Media ---
-        /**
-         * Menambahkan media (gambar/video) ke galeri.
-         * @param {string} url - URL data (data URL untuk gambar, Object URL untuk video).
-         * @param {string} type - 'image' atau 'video'.
-         * @param {string} timestamp - Waktu pengambilan media.
-         */
         function addMediaToGallery(url, type, timestamp) {
-            noMediaMessage.style.display = 'none'; // Sembunyikan pesan "belum ada media"
+            noMediaMsg.style.display = 'none';
+            const itemDiv = document.createElement('div');
+            itemDiv.classList.add('gallery-item');
 
-            const galleryItem = document.createElement('div');
-            galleryItem.classList.add('gallery-item');
-
-            let mediaElement;
+            let mediaEl;
             if (type === 'image') {
-                mediaElement = document.createElement('img');
-                mediaElement.src = url;
-                mediaElement.alt = `Snapshot ${timestamp}`;
+                mediaEl = document.createElement('img');
+                mediaEl.src = url; mediaEl.alt = `Snapshot ${timestamp}`;
             } else {
-                mediaElement = document.createElement('video');
-                mediaElement.src = url;
-                mediaElement.controls = true;
-                mediaElement.autoplay = false;
-                mediaElement.loop = false;
-                mediaElement.muted = true; // Mute video thumbnail by default
+                mediaEl = document.createElement('video');
+                mediaEl.src = url; mediaEl.controls = true; mediaEl.autoplay = false;
+                mediaEl.loop = false; mediaEl.muted = true;
             }
+            const infoDiv = document.createElement('div');
+            infoDiv.classList.add('item-info'); infoDiv.textContent = timestamp;
 
-            const itemInfo = document.createElement('div');
-            itemInfo.classList.add('item-info');
-            itemInfo.textContent = timestamp;
-
-            const itemActions = document.createElement('div');
-            itemActions.classList.add('item-actions');
+            const actionsDiv = document.createElement('div');
+            actionsDiv.classList.add('item-actions');
 
             const downloadBtn = document.createElement('button');
             downloadBtn.textContent = 'Unduh';
             downloadBtn.onclick = () => {
-                const a = document.createElement('a');
-                a.href = url;
-                const fileName = type === 'image' ? `snapshot-${Date.now()}.png` : `video-${Date.now()}.webm`;
-                a.download = fileName;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url); // Hapus Object URL setelah diunduh
+                const a = document.createElement('a'); a.href = url;
+                a.download = type === 'image' ? `snapshot-${Date.now()}.png` : `video-${Date.now()}.webm`;
+                document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                if (type === 'video') URL.revokeObjectURL(url);
             };
-
             const deleteBtn = document.createElement('button');
             deleteBtn.textContent = 'Hapus';
             deleteBtn.onclick = () => {
-                galleryItem.remove();
-                // Jika galeri kosong setelah dihapus, tampilkan pesan
-                if (mediaGallery.children.length === 0) {
-                    noMediaMessage.style.display = 'block';
-                }
-                if (type === 'video') {
-                    URL.revokeObjectURL(url); // Penting untuk membebaskan memori
-                }
+                itemDiv.remove();
+                if (mediaGal.children.length === 0) noMediaMsg.style.display = 'block';
+                if (type === 'video') URL.revokeObjectURL(url);
             };
+            actionsDiv.append(downloadBtn, deleteBtn);
+            itemDiv.append(mediaEl, infoDiv, actionsDiv);
 
-            itemActions.appendChild(downloadBtn);
-            itemActions.appendChild(deleteBtn);
-
-            galleryItem.appendChild(mediaElement);
-            galleryItem.appendChild(itemInfo);
-            galleryItem.appendChild(itemActions);
-
-            // Tambahkan ke galeri, urutkan berdasarkan waktu (yang terbaru di atas)
-            if (mediaGallery.firstChild === noMediaMessage) {
-                mediaGallery.appendChild(galleryItem);
+            if (mediaGal.firstChild === noMediaMsg) {
+                mediaGal.appendChild(itemDiv);
             } else {
-                mediaGallery.insertBefore(galleryItem, mediaGallery.firstChild);
+                mediaGal.insertBefore(itemDiv, mediaGal.firstChild);
             }
         }
 
-        // --- Dark Mode Toggle ---
-        darkModeToggle.addEventListener('click', () => {
+        darkModeTgl.addEventListener('click', () => {
             document.body.classList.toggle('dark-mode');
-            // Simpan preferensi dark mode di localStorage
-            if (document.body.classList.contains('dark-mode')) {
-                localStorage.setItem('theme', 'dark');
-            } else {
-                localStorage.setItem('theme', 'light');
-            }
+            localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
         });
 
-        // Cek preferensi dark mode saat halaman dimuat
         function loadThemePreference() {
-            const savedTheme = localStorage.getItem('theme');
-            if (savedTheme === 'dark') {
+            if (localStorage.getItem('theme') === 'dark') {
                 document.body.classList.add('dark-mode');
             }
         }
 
-        // --- Inisialisasi Aplikasi ---
         window.addEventListener('load', () => {
             loadThemePreference();
-            initCamera(); // Mulai kamera saat halaman dimuat
+            initCamera();
         });
 
-        // Pastikan untuk menghentikan stream saat halaman ditutup
         window.addEventListener('beforeunload', () => {
             if (currentStream) {
-                currentStream.getTracks().forEach(track => track.stop());
+                currentStream.getTracks().forEach(t => t.stop());
             }
         });
-
     </script>
 </body>
 </html>
