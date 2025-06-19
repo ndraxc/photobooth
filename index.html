@@ -1,768 +1,761 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <title>Advanced HD Camera with All Features</title>
-  <style>
-    :root {
-      --primary-color: #4caf50;
-      --secondary-color: #2196f3;
-      --danger-color: #f44336;
-      --dark-bg: #121212;
-      --card-bg: #1f1f1f;
-      --text-color: #ffffff;
-      --border-radius: 10px;
-    }
-    
-    body {
-      background: var(--dark-bg);
-      color: var(--text-color);
-      font-family: 'Segoe UI', Roboto, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 15px;
-      padding: 20px;
-      margin: 0;
-    }
-    
-    h1, h2, h3 {
-      margin: 0.5em 0;
-      text-align: center;
-    }
-    
-    .container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      width: 100%;
-      max-width: 800px;
-    }
-    
-    .camera-container {
-      position: relative;
-      width: 90%;
-      max-width: 600px;
-      margin-bottom: 15px;
-    }
-    
-    video, canvas {
-      width: 100%;
-      background: black;
-      border-radius: var(--border-radius);
-      object-fit: contain;
-      display: block;
-    }
-    
-    .camera-off {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #000;
-      color: white;
-      font-size: 1.2em;
-      height: 337px;
-      border-radius: var(--border-radius);
-    }
-    
-    .overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      border-radius: var(--border-radius);
-    }
-    
-    .grid-overlay {
-      display: none;
-      background-image: 
-        linear-gradient(rgba(255,255,255,0.3) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.3) 1px, transparent 1px);
-      background-size: 20px 20px;
-    }
-    
-    .golden-ratio-overlay {
-      display: none;
-      background-image: 
-        radial-gradient(circle at center, transparent 60%, rgba(255,215,0,0.3) 60.5%),
-        linear-gradient(rgba(255,215,0,0.3) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,215,0,0.3) 1px, transparent 1px);
-      background-size: 100% 100%, 20px 20px, 20px 20px;
-    }
-    
-    .fps-indicator {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background: rgba(0,0,0,0.7);
-      padding: 5px 10px;
-      border-radius: 20px;
-      font-size: 12px;
-      z-index: 10;
-    }
-    
-    .timer-display {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 48px;
-      font-weight: bold;
-      color: white;
-      text-shadow: 0 0 10px black;
-      z-index: 10;
-      display: none;
-    }
-    
-    .controls {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 10px;
-      width: 100%;
-      margin-bottom: 15px;
-    }
-    
-    .control-group {
-      background: var(--card-bg);
-      border-radius: var(--border-radius);
-      padding: 15px;
-      width: 100%;
-      max-width: 600px;
-    }
-    
-    .btn {
-      padding: 10px 15px;
-      margin: 5px;
-      border: none;
-      background-color: var(--card-bg);
-      color: white;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      font-weight: 500;
-    }
-    
-    .btn:hover {
-      background-color: #333;
-    }
-    
-    .btn-primary {
-      background-color: var(--primary-color);
-    }
-    
-    .btn-primary:hover {
-      background-color: #3e8e41;
-    }
-    
-    .btn-danger {
-      background-color: var(--danger-color);
-    }
-    
-    .btn-danger:hover {
-      background-color: #d32f2f;
-    }
-    
-    .btn-secondary {
-      background-color: var(--secondary-color);
-    }
-    
-    .btn-secondary:hover {
-      background-color: #1976d2;
-    }
-    
-    .slider-container {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin: 10px 0;
-    }
-    
-    .slider-container label {
-      min-width: 80px;
-    }
-    
-    .filter-options {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
-      justify-content: center;
-    }
-    
-    .filter-btn {
-      padding: 8px 12px;
-      border-radius: 20px;
-      font-size: 12px;
-    }
-    
-    #status {
-      font-weight: bold;
-      margin: 10px 0;
-      padding: 8px 15px;
-      border-radius: 20px;
-      background-color: rgba(0,0,0,0.3);
-    }
-    
-    #downloadLink {
-      display: none;
-      margin: 10px 0;
-    }
-    
-    .recorded-preview-container {
-      width: 100%;
-      max-width: 600px;
-      margin-top: 20px;
-    }
-    
-    #recordedPreview {
-      width: 100%;
-      border-radius: var(--border-radius);
-      background: black;
-    }
-    
-    .hidden {
-      display: none !important;
-    }
-    
-    @media (max-width: 600px) {
-      .controls {
-        flex-direction: column;
-        align-items: center;
-      }
-      
-      .btn {
-        width: 100%;
-        max-width: 200px;
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Kamera Lengkap</title>
+    <style>
+        /* CSS Umum */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f0f2f5;
+            color: #333;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Dark Mode */
+        body.dark-mode {
+            background-color: #2c2c2c;
+            color: #f0f0f0;
+        }
+
+        body.dark-mode .container,
+        body.dark-mode .gallery-item,
+        body.dark-mode button,
+        body.dark-mode select,
+        body.dark-mode input[type="range"] {
+            background-color: #3a3a3a;
+            border-color: #555;
+            color: #f0f0f0;
+        }
+
+        body.dark-mode button:hover:not(:disabled),
+        body.dark-mode select:hover {
+            background-color: #4a4a4a;
+        }
+
+        .container {
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            margin-bottom: 30px;
+            width: 100%;
+            max-width: 900px;
+            box-sizing: border-box;
+            text-align: center;
+            transition: background-color 0.3s, box-shadow 0.3s;
+        }
+
+        h1 {
+            color: #007bff;
+            margin-bottom: 25px;
+            font-size: 2.2em;
+        }
+
+        /* Video Stream */
+        #video-container {
+            width: 100%;
+            max-width: 640px; /* Batasi lebar video */
+            margin: 0 auto 20px;
+            position: relative;
+            overflow: hidden; /* Penting untuk zoom agar tidak melebar */
+            border-radius: 8px;
+            background-color: #000;
+        }
+
+        video#camera-feed {
+            width: 100%;
+            height: auto;
+            display: block;
+            background-color: black;
+            object-fit: contain; /* Ensure video fits within its container */
+            transform: scale(1); /* Initial scale */
+            transition: transform 0.2s ease-out, filter 0.3s ease-in-out; /* Smooth zoom and filter transition */
+            transform-origin: center center; /* Zoom from center */
+        }
+
+        canvas#hidden-canvas {
+            display: none; /* Hidden canvas for taking snapshots */
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        button, select, input[type="range"] {
+            padding: 12px 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+            background-color: #e9e9e9;
+            color: #333;
+            -webkit-appearance: none; /* Untuk konsistensi slider */
+            appearance: none;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: #dcdcdc;
+            border-color: #b0b0b0;
+        }
+
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        button.primary {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+
+        button.primary:hover:not(:disabled) {
+            background-color: #0056b3;
+            border-color: #0056b3;
+        }
+
+        button.record-active {
+            background-color: #dc3545;
+            color: white;
+            border-color: #dc3545;
+        }
+
+        button.record-active:hover:not(:disabled) {
+            background-color: #c82333;
+            border-color: #c82333;
+        }
+
+        select {
+            padding-right: 30px; /* Ruang untuk panah dropdown */
+        }
+
+        /* Slider Styles */
+        input[type="range"] {
+            height: 8px;
+            background: #d3d3d3;
+            outline: none;
+            opacity: 0.7;
+            transition: opacity .2s;
+            width: 180px;
+            vertical-align: middle;
+            border: none;
+            padding: 0;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.1);
+        }
+
+        body.dark-mode input[type="range"] {
+            background: #555;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #007bff;
+            border-radius: 50%;
+            cursor: grab;
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
+            transition: background-color 0.2s;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #007bff;
+            border-radius: 50%;
+            cursor: grab;
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
+            transition: background-color 0.2s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:active {
+            cursor: grabbing;
+        }
+
+        input[type="range"]::-moz-range-thumb:active {
+            cursor: grabbing;
+        }
+
+        .slider-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-right: 15px; /* Untuk memisahkan dari kontrol lain */
+        }
+
+        /* Galeri */
+        .gallery {
+            width: 100%;
+            max-width: 900px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            margin-top: 30px;
+        }
+
+        body.dark-mode .gallery {
+            border-top: 1px solid #555;
+        }
+
+        .gallery-item {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: #fafafa;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            transition: transform 0.2s, box-shadow 0.2s, background-color 0.3s;
+            position: relative;
+            padding-bottom: 10px; /* Ruang untuk caption/tanggal */
+        }
+
+        .gallery-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.12);
+        }
+
+        .gallery-item img,
+        .gallery-item video {
+            width: 100%;
+            height: 150px; /* Ukuran thumbnail */
+            object-fit: cover;
+            display: block;
+            border-bottom: 1px solid #eee;
+        }
+
+        body.dark-mode .gallery-item img,
+        body.dark-mode .gallery-item video {
+            border-bottom: 1px solid #555;
+        }
+
+        .gallery-item .item-info {
+            padding: 8px;
+            font-size: 0.9em;
+            color: #666;
+            text-align: left;
+        }
+
+        body.dark-mode .gallery-item .item-info {
+            color: #bbb;
+        }
+
+        .gallery-item .item-actions {
+            display: flex;
+            justify-content: space-around;
+            padding: 5px;
+        }
+
+        .gallery-item .item-actions button {
+            background: none;
+            border: none;
+            padding: 5px 8px;
+            font-size: 0.85em;
+            cursor: pointer;
+            color: #007bff;
+        }
+
+        .gallery-item .item-actions button:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            button, select, input[type="range"] {
+                width: 90%;
+                max-width: 300px;
+                box-sizing: border-box;
+            }
+
+            .slider-group {
+                flex-direction: column;
+                width: 90%;
+                max-width: 300px;
+            }
+
+            input[type="range"] {
+                width: 100%;
+            }
+
+            .gallery {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            }
+
+            .gallery-item img,
+            .gallery-item video {
+                height: 120px;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Advanced HD Camera</h1>
-    <p>Complete camera with all features - 60FPS, Photo/Video, Filters & More</p>
-    
-    <div class="camera-container">
-      <video id="preview" autoplay muted playsinline></video>
-      <canvas id="photoPreview" style="display:none;"></canvas>
-      <div id="cameraOffMessage" class="camera-off">Camera is currently turned off</div>
-      <div id="gridOverlay" class="overlay grid-overlay"></div>
-      <div id="goldenRatioOverlay" class="overlay golden-ratio-overlay"></div>
-      <div id="timerDisplay" class="timer-display"></div>
-      <div class="fps-indicator" id="fpsIndicator">FPS: --</div>
+    <div class="container">
+        <h1>Aplikasi Kamera Gemiy & Beb</h1>
+        <button id="dark-mode-toggle">Toggle Dark Mode</button>
+        <hr/>
+        <div id="video-container">
+            <video id="camera-feed" autoplay playsinline></video>
+        </div>
+        <canvas id="hidden-canvas"></canvas>
+
+        <div class="controls">
+            <select id="filter-select">
+                <option value="none">Normal</option>
+                <option value="grayscale(100%)">Grayscale</option>
+                <option value="sepia(100%)">Sepia</option>
+                <option value="invert(100%)">Invert</option>
+                <option value="blur(5px)">Blur</option>
+            </select>
+
+            <div class="slider-group">
+                <label for="brightness-slider">Kecerahan:</label>
+                <input type="range" id="brightness-slider" min="50" max="200" value="100">
+            </div>
+
+            <div class="slider-group">
+                <label for="zoom-slider">Zoom (<span id="zoom-value">1.0</span>x):</label>
+                <input type="range" id="zoom-slider" min="10" max="50" value="10">
+            </div>
+
+            <button id="take-photo-btn" class="primary">Ambil Gambar</button>
+
+            <button id="record-video-btn" class="primary">Mulai Rekam</button>
+
+            <button id="switch-camera-btn" style="display: none;">Ganti Kamera</button>
+        </div>
     </div>
-    
-    <div id="status">Status: Initializing...</div>
-    
-    <div class="controls">
-      <div class="control-group">
-        <h3>Camera Controls</h3>
-        <button id="toggleCameraBtn" class="btn btn-primary">Turn Camera Off</button>
-        <button id="flipCamBtn" class="btn">Switch Camera</button>
-        <button id="mirrorBtn" class="btn">Mirror Mode</button>
-        <button id="flashBtn" class="btn" style="display:none;">Toggle Flash</button>
-        <button id="60fpsBtn" class="btn btn-secondary">Enable 60FPS</button>
-      </div>
-      
-      <div class="control-group">
-        <h3>Image Adjustments</h3>
-        <div class="slider-container">
-          <label for="zoomControl">Zoom:</label>
-          <input type="range" id="zoomControl" min="1" max="3" step="0.01" value="1" disabled>
+
+    <div class="container">
+        <h2>Galeri Media</h2>
+        <div class="gallery" id="media-gallery">
+            <p id="no-media-message">Belum ada media di galeri.</p>
         </div>
-        <div class="slider-container">
-          <label for="brightnessControl">Brightness:</label>
-          <input type="range" id="brightnessControl" min="0" max="200" step="1" value="100">
-        </div>
-        <div class="slider-container">
-          <label for="contrastControl">Contrast:</label>
-          <input type="range" id="contrastControl" min="0" max="200" step="1" value="100">
-        </div>
-      </div>
-      
-      <div class="control-group">
-        <h3>Capture Modes</h3>
-        <button id="takePhotoBtn" class="btn btn-secondary">Take Photo</button>
-        <button id="startBtn" class="btn btn-primary">Start Recording</button>
-        <button id="stopBtn" class="btn btn-danger" disabled>Stop</button>
-        
-        <div style="margin-top:10px;">
-          <label for="timerSelect">Timer:</label>
-          <select id="timerSelect" class="btn">
-            <option value="0">No Timer</option>
-            <option value="3">3 Seconds</option>
-            <option value="5">5 Seconds</option>
-            <option value="10">10 Seconds</option>
-          </select>
-          
-          <label for="resolutionSelect" style="margin-left:10px;">Resolution:</label>
-          <select id="resolutionSelect" class="btn">
-            <option value="480p">480p (SD)</option>
-            <option value="720p">720p (HD)</option>
-            <option value="1080p" selected>1080p (Full HD)</option>
-            <option value="4k">4K (UHD)</option>
-          </select>
-        </div>
-      </div>
-      
-      <div class="control-group">
-        <h3>Overlays</h3>
-        <button id="gridBtn" class="btn">Grid Overlay</button>
-        <button id="goldenRatioBtn" class="btn">Golden Ratio</button>
-      </div>
-      
-      <div class="control-group">
-        <h3>Filters</h3>
-        <div class="filter-options">
-          <button data-filter="none" class="filter-btn btn btn-primary">Normal</button>
-          <button data-filter="grayscale" class="filter-btn btn">Grayscale</button>
-          <button data-filter="sepia" class="filter-btn btn">Sepia</button>
-          <button data-filter="vintage" class="filter-btn btn">Vintage</button>
-          <button data-filter="cool" class="filter-btn btn">Cool</button>
-          <button data-filter="warm" class="filter-btn btn">Warm</button>
-          <button data-filter="invert" class="filter-btn btn">Invert</button>
-          <button data-filter="blur" class="filter-btn btn">Blur</button>
-        </div>
-      </div>
     </div>
-    
-    <a id="downloadLink" class="btn btn-secondary" download="capture">Download</a>
-    
-    <div class="recorded-preview-container">
-      <h3>Preview:</h3>
-      <video id="recordedPreview" controls style="display:none;"></video>
-    </div>
-  </div>
 
-  <script>
-    // Main variables
-    let mediaRecorder;
-    let recordedBlobs = [];
-    let videoTrack;
-    let stream = null;
-    let usingFrontCamera = true;
-    let isMirrored = false;
-    let isTorchOn = false;
-    let isCameraOn = true;
-    let prefer60fps = false;
-    let currentFilter = 'none';
-    let currentZoom = 1;
-    let targetZoom = 1;
-    let brightness = 100;
-    let contrast = 100;
-    let timerInterval;
-    let countdownInterval;
-    let fpsInterval;
-    let lastFrameTime = 0;
-    let frameCount = 0;
-    let currentFps = 0;
+    <script>
+        // DOM Elements
+        const cameraFeed = document.getElementById('camera-feed');
+        const hiddenCanvas = document.getElementById('hidden-canvas');
+        const filterSelect = document.getElementById('filter-select');
+        const brightnessSlider = document.getElementById('brightness-slider');
+        const zoomSlider = document.getElementById('zoom-slider');
+        const zoomValueSpan = document.getElementById('zoom-value');
+        const takePhotoBtn = document.getElementById('take-photo-btn');
+        const recordVideoBtn = document.getElementById('record-video-btn');
+        const switchCameraBtn = document.getElementById('switch-camera-btn');
+        const mediaGallery = document.getElementById('media-gallery');
+        const noMediaMessage = document.getElementById('no-media-message');
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
 
-    // DOM elements
-    const preview = document.getElementById('preview');
-    const photoPreview = document.getElementById('photoPreview');
-    const cameraOffMessage = document.getElementById('cameraOffMessage');
-    const fpsIndicator = document.getElementById('fpsIndicator');
-    const statusText = document.getElementById('status');
-    const recordedPreview = document.getElementById('recordedPreview');
-    const timerDisplay = document.getElementById('timerDisplay');
-    const gridOverlay = document.getElementById('gridOverlay');
-    const goldenRatioOverlay = document.getElementById('goldenRatioOverlay');
-    const zoomControl = document.getElementById('zoomControl');
-    const brightnessControl = document.getElementById('brightnessControl');
-    const contrastControl = document.getElementById('contrastControl');
-    const downloadLink = document.getElementById('downloadLink');
+        // State variables
+        let currentStream;
+        let mediaRecorder;
+        let recordedChunks = [];
+        let isRecording = false;
+        let availableCameras = [];
+        let currentCameraIndex = 0;
+        let currentZoom = 1.0; // Keep track of current zoom level
+        let trackCapabilities = null; // To store camera track capabilities
 
-    // Filter presets
-    const filters = {
-      none: 'none',
-      grayscale: 'grayscale(100%)',
-      sepia: 'sepia(100%)',
-      vintage: 'sepia(70%) brightness(80%) contrast(120%)',
-      cool: 'brightness(110%) contrast(110%) saturate(130%) hue-rotate(-10deg)',
-      warm: 'brightness(110%) contrast(110%) saturate(130%) hue-rotate(10deg)',
-      invert: 'invert(100%)',
-      blur: 'blur(2px)'
-    };
+        // --- Inisialisasi Kamera ---
+        /**
+         * Menginisialisasi stream kamera dan menampilkan di elemen video.
+         * Mengatur filter, brightness, dan zoom awal.
+         * @param {string} deviceId - ID perangkat kamera yang akan digunakan (opsional).
+         * @param {string} facingMode - 'user' (depan) atau 'environment' (belakang) (opsional).
+         */
+        async function initCamera(deviceId, facingMode) {
+            // Hentikan stream yang ada jika ada
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+            }
 
-    // Animation helper
-    function lerp(a, b, t) {
-      return a + (b - a) * t;
-    }
+            // Constraints untuk getUserMedia
+            const constraints = {
+                video: {
+                    deviceId: deviceId ? { exact: deviceId } : undefined,
+                    facingMode: facingMode || 'user', // Default 'user' (depan)
+                    width: { ideal: 1280 }, // Resolusi ideal
+                    height: { ideal: 720 }
+                },
+                audio: true // Untuk rekaman video
+            };
 
-    // FPS counter
-    function checkFPS() {
-      if (!isCameraOn) return;
-      
-      const now = performance.now();
-      if (lastFrameTime) {
-        frameCount++;
-        if (now - lastFrameTime >= 1000) {
-          currentFps = Math.round((frameCount * 1000) / (now - lastFrameTime));
-          fpsIndicator.textContent = `FPS: ${currentFps}`;
-          frameCount = 0;
-          lastFrameTime = now;
-          
-          if (prefer60fps && currentFps < 50) {
-            statusText.textContent = `Status: ${currentFps}FPS (aiming for 60FPS)`;
-          }
+            try {
+                // Mendapatkan stream media dari webcam
+                currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+                cameraFeed.srcObject = currentStream;
+
+                // Setelah stream dimuat, coba dapatkan capabilities track
+                cameraFeed.onloadedmetadata = () => {
+                    const videoTrack = currentStream.getVideoTracks()[0];
+                    if (videoTrack) {
+                        trackCapabilities = videoTrack.getCapabilities();
+                        console.log('Camera capabilities:', trackCapabilities);
+
+                        // Cek apakah zoom didukung secara native
+                        if (trackCapabilities.zoom) {
+                            console.log('Native camera zoom supported.');
+                            // Atur nilai slider zoom berdasarkan rentang native jika ada
+                            zoomSlider.min = trackCapabilities.zoom.min || 1.0;
+                            zoomSlider.max = trackCapabilities.zoom.max || 5.0;
+                            zoomSlider.step = trackCapabilities.zoom.step || 0.1;
+                            zoomSlider.value = currentZoom * 10; // Sesuaikan skala slider
+                            updateZoomDisplay(currentZoom);
+                        } else {
+                            console.log('Native camera zoom not supported. Falling back to CSS transform.');
+                            // Reset slider ke default CSS transform range
+                            zoomSlider.min = 10;
+                            zoomSlider.max = 50;
+                            zoomSlider.step = 1;
+                            zoomSlider.value = currentZoom * 10;
+                            updateZoomDisplay(currentZoom);
+                        }
+                    }
+                };
+
+                // Perbarui daftar kamera yang tersedia
+                await updateCameraList();
+                // Terapkan filter dan brightness yang sedang aktif
+                applyCurrentFilterAndBrightness();
+                // Terapkan zoom yang sedang aktif
+                applyCurrentZoom();
+
+                // Aktifkan tombol-tombol setelah kamera siap
+                takePhotoBtn.disabled = false;
+                recordVideoBtn.disabled = false;
+            } catch (err) {
+                console.error('Error accessing camera:', err);
+                alert('Tidak dapat mengakses kamera. Pastikan Anda telah memberikan izin.');
+                takePhotoBtn.disabled = true;
+                recordVideoBtn.disabled = true;
+            }
         }
-      } else {
-        lastFrameTime = now;
-      }
-      requestAnimationFrame(checkFPS);
-    }
 
-    // Zoom animation
-    function animateZoom() {
-      if (!videoTrack || !isCameraOn) return;
-      
-      const diff = Math.abs(currentZoom - targetZoom);
-      if (diff < 0.001) {
-        currentZoom = targetZoom;
-      } else {
-        currentZoom = lerp(currentZoom, targetZoom, 0.05);
-      }
-      
-      videoTrack.applyConstraints({ advanced: [{ zoom: currentZoom }] }).catch(() => {});
-      requestAnimationFrame(animateZoom);
-    }
+        // --- Fungsi Ambil Gambar ---
+        /**
+         * Mengambil snapshot dari feed kamera dan menambahkannya ke galeri.
+         */
+        takePhotoBtn.addEventListener('click', () => {
+            if (!currentStream) {
+                alert('Kamera belum siap.');
+                return;
+            }
 
-    // Apply image adjustments
-    function applyImageAdjustments() {
-      preview.style.filter = `${filters[currentFilter]} brightness(${brightness}%) contrast(${contrast}%)`;
-    }
+            // Atur ukuran canvas agar sesuai dengan video feed
+            hiddenCanvas.width = cameraFeed.videoWidth;
+            hiddenCanvas.height = cameraFeed.videoHeight;
+            const context = hiddenCanvas.getContext('2d');
 
-    // Start camera
-    async function startCamera() {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-        stream = null;
-      }
+            // Terapkan filter dan brightness ke canvas sebelum mengambil gambar
+            const currentFilter = filterSelect.value;
+            const currentBrightness = brightnessSlider.value;
+            context.filter = `${currentFilter} brightness(${currentBrightness}%)`;
 
-      // Get selected resolution
-      const resolution = document.getElementById('resolutionSelect').value;
-      let width, height;
-      
-      switch(resolution) {
-        case '480p': width = 640; height = 480; break;
-        case '720p': width = 1280; height = 720; break;
-        case '1080p': width = 1920; height = 1080; break;
-        case '4k': width = 3840; height = 2160; break;
-        default: width = 1920; height = 1080;
-      }
+            // Gambar frame video ke canvas
+            context.drawImage(cameraFeed, 0, 0, hiddenCanvas.width, hiddenCanvas.height);
 
-      const constraints = {
-        audio: true,
-        video: {
-          facingMode: usingFrontCamera ? 'user' : 'environment',
-          width: { ideal: width },
-          height: { ideal: height },
-          frameRate: { 
-            ideal: prefer60fps ? 60 : 30,
-            max: prefer60fps ? 60 : 30
-          },
-          zoom: true,
-          torch: true
-        }
-      };
+            // Reset filter canvas agar tidak mempengaruhi gambar selanjutnya
+            context.filter = 'none';
 
-      try {
-        statusText.textContent = 'Status: Starting camera...';
-        stream = await navigator.mediaDevices.getUserMedia(constraints);
-        preview.srcObject = stream;
-        videoTrack = stream.getVideoTracks()[0];
-        const capabilities = videoTrack.getCapabilities();
-        
-        // Setup zoom if available
-        if (capabilities.zoom) {
-          zoomControl.min = capabilities.zoom.min;
-          zoomControl.max = capabilities.zoom.max;
-          zoomControl.step = capabilities.zoom.step || 0.01;
-          currentZoom = targetZoom = videoTrack.getSettings().zoom || 1;
-          zoomControl.value = currentZoom;
-          zoomControl.disabled = false;
-          zoomControl.oninput = () => {
-            targetZoom = parseFloat(zoomControl.value);
-          };
-          animateZoom();
-        } else {
-          zoomControl.disabled = true;
-        }
-        
-        // Check flash capability
-        document.getElementById('flashBtn').style.display =
-          capabilities.torch !== undefined ? 'inline-block' : 'none';
+            // Dapatkan data URL gambar
+            const imageDataURL = hiddenCanvas.toDataURL('image/png');
 
-        // Start FPS counter
-        lastFrameTime = 0;
-        frameCount = 0;
-        checkFPS();
-        
-        // Update UI
-        isCameraOn = true;
-        preview.style.display = 'block';
-        photoPreview.style.display = 'none';
-        cameraOffMessage.style.display = 'none';
-        document.getElementById('toggleCameraBtn').textContent = 'Turn Camera Off';
-        statusText.textContent = `Status: Ready (${prefer60fps ? '60FPS' : '30FPS'})`;
-        
-        // Enable capture buttons
-        document.getElementById('takePhotoBtn').disabled = false;
-        document.getElementById('startBtn').disabled = false;
-        
-        // Apply current settings
-        preview.style.transform = isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
-        applyImageAdjustments();
-        
-      } catch (err) {
-        console.error('Camera error:', err);
-        
-        // Fallback to 30FPS if 60FPS fails
-        if (prefer60fps) {
-          prefer60fps = false;
-          statusText.textContent = 'Status: Falling back to 30FPS';
-          startCamera();
-        } else {
-          isCameraOn = false;
-          preview.style.display = 'none';
-          cameraOffMessage.style.display = 'flex';
-          document.getElementById('toggleCameraBtn').textContent = 'Turn Camera On';
-          statusText.textContent = 'Status: Camera error - ' + err.message;
-          
-          // Disable capture buttons
-          document.getElementById('takePhotoBtn').disabled = true;
-          document.getElementById('startBtn').disabled = true;
-        }
-      }
-    }
-
-    // Stop camera
-    function stopCamera() {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-        stream = null;
-      }
-      
-      isCameraOn = false;
-      preview.style.display = 'none';
-      photoPreview.style.display = 'none';
-      cameraOffMessage.style.display = 'flex';
-      document.getElementById('toggleCameraBtn').textContent = 'Turn Camera On';
-      fpsIndicator.textContent = 'FPS: --';
-      statusText.textContent = 'Status: Camera off';
-      
-      // Disable capture buttons
-      document.getElementById('takePhotoBtn').disabled = true;
-      document.getElementById('startBtn').disabled = true;
-      document.getElementById('stopBtn').disabled = true;
-    }
-
-    // Toggle camera
-    function toggleCamera() {
-      if (isCameraOn) {
-        stopCamera();
-      } else {
-        startCamera();
-      }
-    }
-
-    // Start recording
-    function startRecording() {
-      if (!isCameraOn) return;
-      
-      recordedBlobs = [];
-      const codecPreferences = [
-        'video/webm;codecs=vp9,opus',
-        'video/webm;codecs=vp8,opus',
-        'video/webm'
-      ];
-      
-      let options;
-      for (const codec of codecPreferences) {
-        if (MediaRecorder.isTypeSupported(codec)) {
-          options = { mimeType: codec };
-          break;
-        }
-      }
-      
-      try {
-        mediaRecorder = new MediaRecorder(stream, options || { mimeType: 'video/webm' });
-        
-        mediaRecorder.ondataavailable = e => {
-          if (e.data.size > 0) recordedBlobs.push(e.data);
-        };
-        
-        mediaRecorder.onstop = () => {
-          const blob = new Blob(recordedBlobs, { type: recordedBlobs[0].type });
-          const url = URL.createObjectURL(blob);
-          downloadLink.href = url;
-          downloadLink.textContent = 'Download Video';
-          downloadLink.style.display = 'inline-block';
-          recordedPreview.src = url;
-          recordedPreview.style.display = 'block';
-          photoPreview.style.display = 'none';
-          statusText.textContent = 'Status: Recording complete';
-        };
-        
-        mediaRecorder.start(100); // Collect data every 100ms
-        statusText.textContent = `Status: Recording at ${currentFps}FPS...`;
-        document.getElementById('startBtn').disabled = true;
-        document.getElementById('stopBtn').disabled = false;
-        
-        // Start timer display
-        let seconds = 0;
-        timerInterval = setInterval(() => {
-          seconds++;
-          const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
-          const secs = (seconds % 60).toString().padStart(2, '0');
-          statusText.textContent = `Status: Recording... ${mins}:${secs}`;
-        }, 1000);
-        
-      } catch (err) {
-        statusText.textContent = 'Status: Recording failed - ' + err.message;
-      }
-    }
-
-    // Stop recording
-    function stopRecording() {
-      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-        mediaRecorder.stop();
-        clearInterval(timerInterval);
-        document.getElementById('startBtn').disabled = !isCameraOn;
-        document.getElementById('stopBtn').disabled = true;
-      }
-    }
-
-    // Take photo
-    function takePhoto() {
-      const timerSeconds = parseInt(document.getElementById('timerSelect').value);
-      
-      if (timerSeconds > 0) {
-        startCountdown(timerSeconds);
-      } else {
-        capturePhoto();
-      }
-    }
-    
-    function startCountdown(seconds) {
-      let remaining = seconds;
-      timerDisplay.textContent = remaining;
-      timerDisplay.style.display = 'block';
-      
-      countdownInterval = setInterval(() => {
-        remaining--;
-        timerDisplay.textContent = remaining;
-        
-        if (remaining <= 0) {
-          clearInterval(countdownInterval);
-          timerDisplay.style.display = 'none';
-          capturePhoto();
-        }
-      }, 1000);
-    }
-    
-    function capturePhoto() {
-      photoPreview.width = preview.videoWidth;
-      photoPreview.height = preview.videoHeight;
-      const ctx = photoPreview.getContext('2d');
-      
-      // Apply mirror effect if needed
-      if (isMirrored) {
-        ctx.translate(photoPreview.width, 0);
-        ctx.scale(-1, 1);
-      }
-      
-      ctx.drawImage(preview, 0, 0, photoPreview.width, photoPreview.height);
-      
-      // Apply filter to the captured photo
-      ctx.globalCompositeOperation = 'source-atop';
-      ctx.filter = `${filters[currentFilter]} brightness(${brightness}%) contrast(${contrast}%)`;
-      ctx.drawImage(preview, 0, 0, photoPreview.width, photoPreview.height);
-      ctx.globalCompositeOperation = 'source-over';
-      
-      // Show the photo
-      photoPreview.style.display = 'block';
-      recordedPreview.style.display = 'none';
-      
-      // Create download link
-      photoPreview.toBlob(blob => {
-        const url = URL.createObjectURL(blob);
-        downloadLink.href = url;
-        downloadLink.textContent = 'Download Photo';
-        downloadLink.style.display = 'inline-block';
-        downloadLink.setAttribute('download', 'photo.png');
-      }, 'image/png');
-      
-      statusText.textContent = 'Status: Photo captured';
-    }
-
-    // Event listeners
-    document.getElementById('toggleCameraBtn').addEventListener('click', toggleCamera);
-    document.getElementById('flipCamBtn').addEventListener('click', () => {
-      usingFrontCamera = !usingFrontCamera;
-      if (isCameraOn) startCamera();
-    });
-    document.getElementById('mirrorBtn').addEventListener('click', () => {
-      isMirrored = !isMirrored;
-      preview.style.transform = isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
-    });
-    document.getElementById('flashBtn').addEventListener('click', () => {
-      if (!videoTrack || !isCameraOn) return;
-      isTorchOn = !isTorchOn;
-      videoTrack.applyConstraints({ advanced: [{ torch: isTorchOn }] }).catch(err => {
-        alert('Flash not available: ' + err.message);
-      });
-    });
-    document.getElementById('60fpsBtn').addEventListener('click', () => {
-      prefer60fps = !prefer60fps;
-      document.getElementById('60fpsBtn').classList.toggle('btn-primary', prefer60fps);
-      document.getElementById('60fpsBtn').classList.toggle('btn-secondary', !prefer60fps);
-      if (isCameraOn) startCamera();
-    });
-    document.getElementById('gridBtn').addEventListener('click', () => {
-      gridOverlay.style.display = gridOverlay.style.display === 'none' ? 'block' : 'none';
-      goldenRatioOverlay.style.display = 'none';
-    });
-    document.getElementById('goldenRatioBtn').addEventListener('click', () => {
-      goldenRatioOverlay.style.display = goldenRatioOverlay.style.display === 'none' ? 'block' : 'none';
-      gridOverlay.style.display = 'none';
-    });
-    document.getElementById('takePhotoBtn').addEventListener('click', takePhoto);
-    document.getElementById('startBtn').addEventListener('click', startRecording);
-    document.getElementById('stopBtn').addEventListener('click', stopRecording);
-    document.getElementById('resolutionSelect').addEventListener('change', () => {
-      if (isCameraOn) startCamera();
-    });
-    brightnessControl.addEventListener('input', () => {
-      brightness = parseInt(brightnessControl.value);
-      applyImageAdjustments();
-    });
-    contrastControl.addEventListener('input', () => {
-      contrast = parseInt(contrastControl.value);
-      applyImageAdjustments();
-    });
-    
-    // Filter buttons
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        currentFilter = btn.dataset.filter;
-        applyImageAdjustments();
-        
-        // Update active state
-        document.querySelectorAll('.filter-btn').forEach(b => {
-          b.classList.remove('btn-primary');
-          if (b.dataset.filter === currentFilter) {
-            b.classList.add('btn-primary');
-          }
+            // Buat elemen gambar baru dan tambahkan ke galeri
+            const timestamp = new Date().toLocaleString();
+            addMediaToGallery(imageDataURL, 'image', timestamp);
         });
-      });
-    });
 
-    // Initialize
-    document.querySelector('.filter-btn[data-filter="none"]').classList.add('btn-primary');
-    startCamera();
-  </script>
+        // --- Fungsi Rekam Video ---
+        recordVideoBtn.addEventListener('click', () => {
+            if (!currentStream) {
+                alert('Kamera belum siap.');
+                return;
+            }
+
+            if (!isRecording) {
+                // Mulai Rekam
+                recordedChunks = [];
+                // Atur mimeType untuk WebM agar kompatibel
+                const options = { mimeType: 'video/webm; codecs=vp9' };
+                try {
+                    mediaRecorder = new MediaRecorder(currentStream, options);
+                } catch (e) {
+                    // Fallback ke codec lain jika vp9 tidak didukung
+                    console.warn('VP9 codec not supported, trying VP8:', e);
+                    const fallbackOptions = { mimeType: 'video/webm; codecs=vp8' };
+                    try {
+                        mediaRecorder = new MediaRecorder(currentStream, fallbackOptions);
+                    } catch (e2) {
+                        console.error('Neither VP9 nor VP8 codecs supported:', e2);
+                        alert('Browser Anda tidak mendukung perekaman video dengan codec yang tersedia.');
+                        return;
+                    }
+                }
+
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        recordedChunks.push(event.data);
+                    }
+                };
+
+                mediaRecorder.onstop = () => {
+                    // Buat Blob dari potongan-potongan video
+                    const superBuffer = new Blob(recordedChunks, { type: 'video/webm' });
+                    const videoURL = URL.createObjectURL(superBuffer);
+
+                    // Tambahkan video ke galeri
+                    const timestamp = new Date().toLocaleString();
+                    addMediaToGallery(videoURL, 'video', timestamp);
+                };
+
+                mediaRecorder.start();
+                recordVideoBtn.textContent = 'Stop Rekam';
+                recordVideoBtn.classList.add('record-active');
+                takePhotoBtn.disabled = true; // Nonaktifkan tombol ambil gambar saat merekam
+                isRecording = true;
+                console.log('Mulai merekam...');
+            } else {
+                // Stop Rekam
+                mediaRecorder.stop();
+                recordVideoBtn.textContent = 'Mulai Rekam';
+                recordVideoBtn.classList.remove('record-active');
+                takePhotoBtn.disabled = false; // Aktifkan kembali
+                isRecording = false;
+                console.log('Merekam dihentikan.');
+            }
+        });
+
+        // --- Kontrol Filter & Brightness ---
+        /**
+         * Menerapkan filter dan brightness yang dipilih ke feed kamera.
+         */
+        function applyCurrentFilterAndBrightness() {
+            const selectedFilter = filterSelect.value;
+            const brightnessValue = brightnessSlider.value;
+            let filterString = `brightness(${brightnessValue}%)`;
+
+            if (selectedFilter !== 'none') {
+                // Jika filter bukan 'none' dan bukan 'brightness' itu sendiri (yang dihandle slider)
+                if (!selectedFilter.includes('brightness')) {
+                    filterString = `${selectedFilter} ${filterString}`;
+                } else {
+                    filterString = selectedFilter; // Override jika filter adalah brightness (misal untuk reset)
+                }
+            }
+            cameraFeed.style.filter = filterString;
+        }
+
+        filterSelect.addEventListener('change', applyCurrentFilterAndBrightness);
+        brightnessSlider.addEventListener('input', applyCurrentFilterAndBrightness);
+
+        // --- Kontrol Zoom (Fitur Baru) ---
+        /**
+         * Menerapkan tingkat zoom ke feed kamera.
+         * Prioritas: native camera zoom, fallback: CSS transform.
+         */
+        function applyCurrentZoom() {
+            // Skala nilai slider dari 10-50 ke 1.0-5.0
+            currentZoom = zoomSlider.value / 10;
+            updateZoomDisplay(currentZoom);
+
+            const videoTrack = currentStream ? currentStream.getVideoTracks()[0] : null;
+
+            if (videoTrack && trackCapabilities && trackCapabilities.zoom) {
+                // Gunakan native camera zoom jika didukung
+                const constraints = {
+                    advanced: [{ zoom: currentZoom }]
+                };
+                videoTrack.applyConstraints(constraints)
+                    .then(() => console.log('Native zoom applied:', currentZoom))
+                    .catch(e => console.error('Error applying native zoom:', e));
+                // Pastikan CSS transform direset jika menggunakan native zoom
+                cameraFeed.style.transform = 'scale(1)';
+            } else {
+                // Fallback ke CSS transform jika native zoom tidak didukung
+                cameraFeed.style.transform = `scale(${currentZoom})`;
+            }
+        }
+
+        function updateZoomDisplay(zoomVal) {
+            zoomValueSpan.textContent = zoomVal.toFixed(1);
+        }
+
+        zoomSlider.addEventListener('input', applyCurrentZoom);
+
+
+        // --- Switch Kamera ---
+        /**
+         * Memperbarui daftar kamera yang tersedia dan menampilkan tombol switch jika ada lebih dari satu.
+         */
+        async function updateCameraList() {
+            availableCameras = [];
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                devices.forEach(device => {
+                    if (device.kind === 'videoinput') {
+                        availableCameras.push(device);
+                    }
+                });
+
+                if (availableCameras.length > 1) {
+                    switchCameraBtn.style.display = 'block';
+                } else {
+                    switchCameraBtn.style.display = 'none';
+                }
+            } catch (err) {
+                console.error('Error enumerating devices:', err);
+            }
+        }
+
+        switchCameraBtn.addEventListener('click', async () => {
+            if (availableCameras.length > 1) {
+                currentCameraIndex = (currentCameraIndex + 1) % availableCameras.length;
+                const nextCamera = availableCameras[currentCameraIndex];
+                await initCamera(nextCamera.deviceId);
+            }
+        });
+
+        // --- Galeri Media ---
+        /**
+         * Menambahkan media (gambar/video) ke galeri.
+         * @param {string} url - URL data (data URL untuk gambar, Object URL untuk video).
+         * @param {string} type - 'image' atau 'video'.
+         * @param {string} timestamp - Waktu pengambilan media.
+         */
+        function addMediaToGallery(url, type, timestamp) {
+            noMediaMessage.style.display = 'none'; // Sembunyikan pesan "belum ada media"
+
+            const galleryItem = document.createElement('div');
+            galleryItem.classList.add('gallery-item');
+
+            let mediaElement;
+            if (type === 'image') {
+                mediaElement = document.createElement('img');
+                mediaElement.src = url;
+                mediaElement.alt = `Snapshot ${timestamp}`;
+            } else {
+                mediaElement = document.createElement('video');
+                mediaElement.src = url;
+                mediaElement.controls = true;
+                mediaElement.autoplay = false;
+                mediaElement.loop = false;
+                mediaElement.muted = true; // Mute video thumbnail by default
+            }
+
+            const itemInfo = document.createElement('div');
+            itemInfo.classList.add('item-info');
+            itemInfo.textContent = timestamp;
+
+            const itemActions = document.createElement('div');
+            itemActions.classList.add('item-actions');
+
+            const downloadBtn = document.createElement('button');
+            downloadBtn.textContent = 'Unduh';
+            downloadBtn.onclick = () => {
+                const a = document.createElement('a');
+                a.href = url;
+                const fileName = type === 'image' ? `snapshot-${Date.now()}.png` : `video-${Date.now()}.webm`;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url); // Hapus Object URL setelah diunduh
+            };
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = 'Hapus';
+            deleteBtn.onclick = () => {
+                galleryItem.remove();
+                // Jika galeri kosong setelah dihapus, tampilkan pesan
+                if (mediaGallery.children.length === 0) {
+                    noMediaMessage.style.display = 'block';
+                }
+                if (type === 'video') {
+                    URL.revokeObjectURL(url); // Penting untuk membebaskan memori
+                }
+            };
+
+            itemActions.appendChild(downloadBtn);
+            itemActions.appendChild(deleteBtn);
+
+            galleryItem.appendChild(mediaElement);
+            galleryItem.appendChild(itemInfo);
+            galleryItem.appendChild(itemActions);
+
+            // Tambahkan ke galeri, urutkan berdasarkan waktu (yang terbaru di atas)
+            if (mediaGallery.firstChild === noMediaMessage) {
+                mediaGallery.appendChild(galleryItem);
+            } else {
+                mediaGallery.insertBefore(galleryItem, mediaGallery.firstChild);
+            }
+        }
+
+        // --- Dark Mode Toggle ---
+        darkModeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            // Simpan preferensi dark mode di localStorage
+            if (document.body.classList.contains('dark-mode')) {
+                localStorage.setItem('theme', 'dark');
+            } else {
+                localStorage.setItem('theme', 'light');
+            }
+        });
+
+        // Cek preferensi dark mode saat halaman dimuat
+        function loadThemePreference() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-mode');
+            }
+        }
+
+        // --- Inisialisasi Aplikasi ---
+        window.addEventListener('load', () => {
+            loadThemePreference();
+            initCamera(); // Mulai kamera saat halaman dimuat
+        });
+
+        // Pastikan untuk menghentikan stream saat halaman ditutup
+        window.addEventListener('beforeunload', () => {
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+            }
+        });
+
+    </script>
 </body>
 </html>
